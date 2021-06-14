@@ -388,6 +388,7 @@ def main():
                                  args.bn_threshold, args.gpu)
     enc_params, dec_params, slim_params = [], [], []
 
+    # Append params to lists `enc_params`, `dec_params`, `slim_params`
     for name, param in segmenter.named_parameters():
         if bool(re.match('.*conv1.*|.*bn1.*|.*layer.*', name)):
             enc_params.append(param)
@@ -402,32 +403,41 @@ def main():
                 slim_params.append(param[:len(param) // 2])
             else:
                 slim_params.append(param[len(param) // 2:])
+    
+    # Print network at the begining of training process
     if args.print_network:
         print_log('')
+
+    # Load state_dict
     segmenter = model_init(segmenter, args.enc, len(args.input), imagenet=args.enc_pretrained)
     print_log('Loaded Segmenter {}, ImageNet-Pre-Trained={}, #PARAMS={:3.2f}M'
           .format(args.enc, args.enc_pretrained, compute_params(segmenter) / 1e6))
+
     # Restore if any
     best_val, epoch_start = 0, 0
     if args.resume:
         if os.path.isfile(args.resume):
             best_val, epoch_start = load_ckpt(args.resume, {'segmenter': segmenter})
         else:
-            print_log("=> no checkpoint found at '{}'".format(args.resume))
+            print_log("No checkpoint found at '{}'".format(args.resume))
             return
     epoch_current = epoch_start
+
     # Criterion
     segm_crit = nn.NLLLoss(ignore_index=args.ignore_label).cuda()
-    # Saver
+
+    # Saver - save checkpoint at validation term
     saver = Saver(args=vars(args), ckpt_dir=ckpt_dir, best_val=best_val,
                   condition=lambda x, y: x > y)  # keep checkpoint with the best validation score
 
+    # ???
     for task_idx in range(args.num_stages):
         total_epoch = sum([args.num_epoch[idx] for idx in range(task_idx + 1)])
         if epoch_start >= total_epoch:
             continue
         start = time.time()
         torch.cuda.empty_cache()
+
         # Create dataloaders
         train_loader, val_loader = create_loaders(
             DATASET, args.input, args.train_dir, args.val_dir, args.train_list, args.val_list,
