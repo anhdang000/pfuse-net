@@ -109,7 +109,7 @@ def get_arguments():
                         help='How often to validate current architecture.')
     parser.add_argument('--print-network', action='store_true', default=False,
                         help='Whether print newtork paramemters.')
-    parser.add_argument('--print-loss', action='store_true', default=False,
+    parser.add_argument('--print-loss', action='store_true', default=True,
                         help='Whether print losses during training.')
     parser.add_argument('--save-image', type=int, default=100,
                         help='Number to save images during evaluating, -1 to save all.')
@@ -229,6 +229,7 @@ def create_optimisers(lr_enc, lr_dec, mom_enc, mom_dec, wd_enc, wd_dec, param_en
 def load_ckpt(ckpt_path, ckpt_dict):
     ckpt = torch.load(ckpt_path, map_location='cpu')
     for (k, v) in ckpt_dict.items():
+        # Load state_sict by referred key (from `ckpt_dict`)
         if k in ckpt:
             v.load_state_dict(ckpt[k])
     best_val = ckpt.get('best_val', 0)
@@ -238,6 +239,7 @@ def load_ckpt(ckpt_path, ckpt_dict):
     return best_val, epoch_start
 
 
+# Used at Exchange module
 def L1_penalty(var):
     return torch.abs(var).sum()
 
@@ -365,6 +367,7 @@ def main():
     args = get_arguments()
     args.num_stages = len(args.lr_enc)
 
+    # Copy all current working scripts and folders into ckeckpoints directory
     ckpt_dir = os.path.join('ckpt', args.ckpt)
     os.makedirs(ckpt_dir, exist_ok=True)
     os.system('cp -r *py models utils data %s' % ckpt_dir)
@@ -378,6 +381,7 @@ def main():
         torch.cuda.manual_seed_all(args.random_seed)
     np.random.seed(args.random_seed)
     random.seed(args.random_seed)
+
     # Generate Segmenter
     torch.cuda.set_device(args.gpu[0])
     segmenter = create_segmenter(args.enc, args.num_classes, len(args.input),
