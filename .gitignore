@@ -1,2 +1,4 @@
 semantic_segmentation/data/
 image2image_translation/data
+.vscode/
+__pycache__/
