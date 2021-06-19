@@ -11,7 +11,20 @@ from PIL import Image
 
 from torchvision.datasets.utils import download_and_extract_archive
 from torchvision.datasets import VisionDataset
+from torch.utils.data.dataloader import default_collate
 import torch
+
+
+def collate_fn(batch):
+    items = list(zip(*batch))
+    items[0] = default_collate([i for i in items[0] if torch.is_tensor(i)])
+    items[1] = list([i for i in items[1] if i])
+    items[2] = list([i for i in items[2] if i])
+    items[3] = default_collate([i for i in items[3] if torch.is_tensor(i)])
+    items[4] = default_collate([i for i in items[4] if torch.is_tensor(i)])
+    return items
+
+
 class Kitti(VisionDataset):
     """
         It is modified from pytorch website to add loading local pattern image
@@ -25,6 +38,7 @@ class Kitti(VisionDataset):
     image_dir_name = "image_2"
     labels_dir_name = "label_2"
     lp_dir_name = "lp_image"
+
     def __init__(
             self,
             root: str,
@@ -74,6 +88,7 @@ class Kitti(VisionDataset):
                 self.targets.append(
                     os.path.join(labels_dir, f"{img_file.split('.')[0]}.txt")
                 )
+
     def __getitem__(self, index):
         """Get item at a given index.
 
@@ -98,7 +113,7 @@ class Kitti(VisionDataset):
         target = self._parse_target(index) if self.mode == "train" or self.mode == "val" else None
         if self.transforms:
             image, target = self.transforms(image, target)
-        return image, lp_image,target
+        return image, lp_image, target
 
     def _parse_target(self, index: int) -> List:
         target = []
@@ -150,6 +165,7 @@ class Kitti(VisionDataset):
     #             filename=fname,
     #         )
 
+
 class KittiDataset(Kitti):
     def __init__(self, root, mode, transform=None):
         super(KittiDataset, self).__init__(root, mode)
@@ -171,10 +187,8 @@ class KittiDataset(Kitti):
             self.label_info[counter] = c
             counter += 1
 
-
-
     def __getitem__(self, item):
-        image, lp_image,target = super(KittiDataset, self).__getitem__(item)
+        image, lp_image, target = super(KittiDataset, self).__getitem__(item)
         width, height = image.size
         boxes = []
         labels = []
@@ -187,5 +201,5 @@ class KittiDataset(Kitti):
         boxes = torch.tensor(boxes)
         labels = torch.tensor(labels)
         if self.transform is not None:
-            image, lp_image,(height, width), boxes, labels = self.transform(image, lp_image,(height, width), boxes, labels)
-        return image, lp_image,(height, width), boxes, labels
+            image, lp_image, (height, width), boxes, labels = self.transform(image, lp_image, (height, width), boxes, labels)
+        return image, lp_image, (height, width), boxes, labels
