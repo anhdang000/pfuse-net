@@ -12,6 +12,8 @@ from PIL import Image
 from torchvision.datasets.utils import download_and_extract_archive
 from torchvision.datasets import VisionDataset
 import torch
+
+
 class Kitti(VisionDataset):
     """
         It is modified from pytorch website to add loading local pattern image
@@ -55,8 +57,8 @@ class Kitti(VisionDataset):
         #         "Dataset not found. You may use download=True to download it."
         #     )
 
-        image_dir = os.path.join(self.root, self._location,self.image_dir_name)
-        lp_dir = os.path.join(self.root, self._location,self.lp_dir_name)
+        image_dir = os.path.join(self.root, self._location, self.image_dir_name)
+        lp_dir = os.path.join(self.root, self._location, self.lp_dir_name)
 
         img_files = os.listdir(image_dir)
         length = int(0.7*len(img_files))
@@ -75,7 +77,8 @@ class Kitti(VisionDataset):
                     os.path.join(labels_dir, f"{img_file.split('.')[0]}.txt")
                 )
     def __getitem__(self, index):
-        """Get item at a given index.
+        """
+        Get item at a given index.
 
                 Args:
                     index (int): Index
@@ -92,7 +95,8 @@ class Kitti(VisionDataset):
                     - locations: float[3]
                     - rotation_y: float
 
-                """
+        """
+        
         image = Image.open(self.images[index])
         lp_image = Image.open(self.lp_images[index])
         target = self._parse_target(index) if self.mode == "train" or self.mode == "val" else None
