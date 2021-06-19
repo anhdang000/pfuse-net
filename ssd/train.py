@@ -10,24 +10,22 @@ from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from model import SSD, SSDLite, ResNet, MobileNetV2
-from utils import generate_dboxes, Encoder, coco_classes
-from transform import SSDTransformer
-from loss import Loss
-from process import train, evaluate
-from dataset import collate_fn, CocoDataset
+from ssd.model import SSD, SSDLite, ResNet, MobileNetV2
+from ssd.utils import generate_dboxes, Encoder, kitti_classes
+from ssd.transform import SSDTransformer
+from ssd.loss import Loss
+from ssd.process import train, evaluate
+from ssd.kitti_dataset import collate_fn, KittiDataset
 
 
 def get_args():
     parser = ArgumentParser(description="Implementation of SSD")
-    parser.add_argument("--data-path", type=str, default="/coco",
+    parser.add_argument("--root", type=str, default="/coco",
                         help="the root folder of dataset")
     parser.add_argument("--save-folder", type=str, default="trained_models",
                         help="path to folder containing model checkpoint file")
     parser.add_argument("--log-path", type=str, default="tensorboard/SSD")
 
-    parser.add_argument("--model", type=str, default="ssd", choices=["ssd", "ssdlite"],
-                        help="ssd-resnet50 or ssdlite-mobilenetv2")
     parser.add_argument("--epochs", type=int, default=65, help="number of total epochs to run")
     parser.add_argument("--batch-size", type=int, default=32, help="number of samples for each iteration")
     parser.add_argument("--multistep", nargs="*", type=int, default=[43, 54],
@@ -68,15 +66,13 @@ def train_detector(opt):
                    "num_workers": opt.num_workers,
                    "collate_fn": collate_fn}
 
-    if opt.model == "ssd":
-        dboxes = generate_dboxes(model="ssd")
-        model = SSD(backbone=ResNet(), num_classes=len(coco_classes))
-    else:
-        dboxes = generate_dboxes(model="ssdlite")
-        model = SSDLite(backbone=MobileNetV2(), num_classes=len(coco_classes))
-    train_set = CocoDataset(opt.data_path, 2017, "train", SSDTransformer(dboxes, (300, 300), val=False))
+
+    dboxes = generate_dboxes(model="ssd")
+    model = SSD(backbone=ResNet(), num_classes=len(kitti_classes))
+
+    train_set = KittiDataset(opt.root, "train", SSDTransformer(dboxes, (300, 300), val=False))
     train_loader = DataLoader(train_set, **train_params)
-    test_set = CocoDataset(opt.data_path, 2017, "val", SSDTransformer(dboxes, (300, 300), val=True))
+    test_set = KittiDataset(opt.root, "val", SSDTransformer(dboxes, (300, 300), val=True))
     test_loader = DataLoader(test_set, **test_params)
 
     encoder = Encoder(dboxes)
@@ -102,7 +98,6 @@ def train_detector(opt):
         # It is recommended to use DistributedDataParallel, instead of DataParallel
         # to do multi-GPU training, even if there is only a single node.
         model = DDP(model)
-
 
     if os.path.isdir(opt.log_path):
         shutil.rmtree(opt.log_path)

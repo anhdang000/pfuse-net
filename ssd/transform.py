@@ -92,7 +92,7 @@ class SSDCropping(object):
 
                 htot = bottom_idx - top_idx
                 wtot = right_idx - left_idx
-                return img, lp_img,(htot, wtot), bboxes, labels
+                return img, lp_img, (htot, wtot), bboxes, labels
 
 
 class RandomHorizontalFlip(object):
@@ -134,7 +134,7 @@ class SSDTransformer(object):
             self.normalize
         ])
 
-    def __call__(self, img, lp_img,img_size, bboxes=None, labels=None, max_num=200):
+    def __call__(self, img, lp_img, img_size, bboxes=None, labels=None, max_num=200):
         if self.val:
             bbox_out = torch.zeros(max_num, 4)
             label_out = torch.zeros(max_num, dtype=torch.long)
