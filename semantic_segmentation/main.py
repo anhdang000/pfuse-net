@@ -276,22 +276,36 @@ def train(segmenter, input_types, train_loader, optim_enc, optim_dec, epoch,
         outputs, _ = segmenter(inputs)
         loss = 0
         for output in outputs:
+            # Resize to target size
             output = nn.functional.interpolate(output, size=target.size()[1:],
                                                mode='bilinear', align_corners=False)
             soft_output = nn.LogSoftmax()(output)
+            
             # Compute loss and backpropagate
             loss += segm_crit(soft_output, target)
             L1_norm = sum([L1_penalty(m).cuda() for m in slim_params])
             loss += lamda * L1_norm  # this is actually counted for len(outputs) times
+        
+        # Compute grads
         optim_enc.zero_grad()
         optim_dec.zero_grad()
         loss.backward()
+
+        # Logging loss
         if print_loss:
             print('step: %-3d: loss=%.2f' % (i, loss), flush=True)
+
+        # Update params at Endocer & Decoder
         optim_enc.step()
         optim_dec.step()
+
+        # Update loss
         losses.update(loss.item())
+
+        # Time cost computation
         batch_time.update(time.time() - start)
+    
+    # Some insights of slim params at current epoch, which cause Channel Exchange
     slim_params_list = []
     for slim_param in slim_params:
         slim_params_list.extend(slim_param.cpu().data.numpy())
@@ -430,9 +444,11 @@ def main():
     saver = Saver(args=vars(args), ckpt_dir=ckpt_dir, best_val=best_val,
                   condition=lambda x, y: x > y)  # keep checkpoint with the best validation score
 
-    # ???
+    # Training with 3 stage
     for task_idx in range(args.num_stages):
         total_epoch = sum([args.num_epoch[idx] for idx in range(task_idx + 1)])
+
+        # When already passed the current stage (In resume scenario)
         if epoch_start >= total_epoch:
             continue
         start = time.time()
@@ -455,6 +471,7 @@ def main():
             args.wd_enc, args.wd_dec,
             enc_params, dec_params, args.optim_dec)
 
+        # Looping
         for epoch in range(min(args.num_epoch[task_idx], total_epoch - epoch_start)):
             train(segmenter, args.input, train_loader, optim_enc, optim_dec, epoch_current,
                   segm_crit, args.freeze_bn, slim_params, args.lamda, args.bn_threshold, args.print_loss)

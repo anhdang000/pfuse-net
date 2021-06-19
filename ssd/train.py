@@ -10,12 +10,12 @@ from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from src.model import SSD, SSDLite, ResNet, MobileNetV2
-from src.utils import generate_dboxes, Encoder, coco_classes
-from src.transform import SSDTransformer
-from src.loss import Loss
-from src.process import train, evaluate
-from src.dataset import collate_fn, CocoDataset
+from model import SSD, SSDLite, ResNet, MobileNetV2
+from utils import generate_dboxes, Encoder, coco_classes
+from transform import SSDTransformer
+from loss import Loss
+from process import train, evaluate
+from dataset import collate_fn, CocoDataset
 
 
 def get_args():
