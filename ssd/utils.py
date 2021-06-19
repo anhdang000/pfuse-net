@@ -20,7 +20,7 @@ coco_classes = ["background", "person", "bicycle", "car", "motorcycle", "airplan
                 "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors",
                 "teddy bear", "hair drier", "toothbrush"]
 
-colors = [None, (39, 129, 113), (164, 80, 133), (83, 122, 114), (99, 81, 172), (95, 56, 104), (37, 84, 86),
+coco_colors = [None, (39, 129, 113), (164, 80, 133), (83, 122, 114), (99, 81, 172), (95, 56, 104), (37, 84, 86),
           (14, 89, 122),
           (80, 7, 65), (10, 102, 25), (90, 185, 109), (106, 110, 132), (169, 158, 85), (188, 185, 26), (103, 1, 17),
           (82, 144, 81), (92, 7, 184), (49, 81, 155), (179, 177, 69), (93, 187, 158), (13, 39, 73), (12, 50, 60),
@@ -37,7 +37,14 @@ colors = [None, (39, 129, 113), (164, 80, 133), (83, 122, 114), (99, 81, 172), (
           (81, 175, 64), (178, 19, 157), (74, 188, 190), (18, 114, 2), (62, 128, 96), (21, 3, 150), (0, 6, 95),
           (2, 20, 184), (122, 37, 185)]
 
+kitti_classes = ['_background_', 'Car', 'Van', 'Truck', 'Pedestrian', 'Person_sitting', 
+                'Cyclist', 'Tram', 'Misc', 'DontCare']
 
+kitti_colors = [
+    None, (39, 129, 113), (21, 35, 42), (49, 119, 155), (7, 185, 124), (46, 34, 146), 
+    (105, 184, 169), (22, 18, 5), (147, 71, 73), (181, 64, 91)
+    ]
+    
 class Encoder(object):
     """
         Inspired by https://github.com/kuangliu/pytorch-src
