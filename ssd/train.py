@@ -47,7 +47,7 @@ def get_args():
     return args
 
 
-def main(opt):
+def train_detector(opt):
     if torch.cuda.is_available():
         torch.distributed.init_process_group(backend='nccl', init_method='env://')
         num_gpus = torch.distributed.get_world_size()
@@ -134,6 +134,6 @@ def main(opt):
         torch.save(checkpoint, checkpoint_path)
 
 
-if __name__ == "__main__":
-    opt = get_args()
-    main(opt)
+# if __name__ == "__main__":
+#     opt = get_args()
+#     train_detector(opt)
