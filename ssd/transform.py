@@ -9,7 +9,7 @@ import torch
 import torchvision.transforms as transforms
 from torchvision.ops.boxes import box_iou
 
-from ssd.utils import Encoder
+from utils import Encoder
 
 
 class SSDCropping(object):

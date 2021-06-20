@@ -9,16 +9,19 @@ import torch
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-
-from ssd.model import SSD, SSDLite, ResNet, MobileNetV2, SSD_parallel
-from ssd.utils import generate_dboxes, Encoder, kitti_classes
-from ssd.transform import SSDTransformer
-from ssd.loss import Loss
-from ssd.process import train, evaluate
-from ssd.kitti_dataset import collate_fn, KittiDataset
+from model import ResNet, SSD_parallel
+from utils import generate_dboxes, Encoder
+from transform import SSDTransformer
+from loss import Loss
+from process import train, evaluate
+from kitti_dataset import collate_fn, KittiDataset
 
 # Load config
-from ssd.config import *
+from config import *
+
+
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def get_args():
@@ -58,18 +61,15 @@ def train_detector(opt):
     train_params = {"batch_size": opt.batch_size * num_gpus,
                     "shuffle": True,
                     "drop_last": False,
-                    "num_workers": opt.num_workers,
-                    "collate_fn": collate_fn}
+                    "num_workers": opt.num_workers}
 
     test_params = {"batch_size": opt.batch_size * num_gpus,
                    "shuffle": False,
                    "drop_last": False,
-                   "num_workers": opt.num_workers,
-                   "collate_fn": collate_fn}
-
+                   "num_workers": opt.num_workers}
 
     dboxes = generate_dboxes(model="ssd")
-    model = SSD_parallel(backbone=ResNet(), num_classes=len(kitti_classes))
+    model = SSD_parallel(backbone=ResNet(), num_classes=len(KITTI_CLASSES))
 
     train_set = KittiDataset(ROOT, "train", SSDTransformer(dboxes, (300, 300), val=False))
     train_loader = DataLoader(train_set, **train_params)
@@ -130,6 +130,6 @@ def train_detector(opt):
         torch.save(checkpoint, checkpoint_path)
 
 
-# if __name__ == "__main__":
-#     opt = get_args()
-#     train_detector(opt)
+if __name__ == "__main__":
+    opt = get_args()
+    train_detector(opt)

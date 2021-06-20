@@ -15,7 +15,7 @@ from torch.utils.data.dataloader import default_collate
 import torch
 
 # Load config
-from ssd.config import *
+from config import *
 
 
 def collate_fn(batch):
@@ -120,7 +120,7 @@ class Kitti(VisionDataset):
         target = self._parse_target(index) if self.mode == "train" or self.mode == "val" else None
         if self.transforms:
             image, target = self.transforms(image, target)
-        return image, lp_image, image_id,target
+        return image, lp_image, image_id, target
 
     def _parse_target(self, index: int) -> List:
         target = []
@@ -204,4 +204,8 @@ class KittiDataset(Kitti):
         labels = torch.tensor(labels)
         if self.transform is not None:
             image, lp_image, (height, width), boxes, labels = self.transform(image, lp_image, (height, width), boxes, labels)
-        return image, lp_image, image_id,(height, width), boxes, labels
+
+        return image, lp_image, image_id, (height, width), boxes, labels
+
+        # `label`: 8732
+        # `boxes`: 8732 x 4

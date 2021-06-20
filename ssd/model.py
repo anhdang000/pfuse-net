@@ -5,8 +5,7 @@ to add Parallel modules by TuyenNQ <s1262008@u-aizu.ac.jp>
 import torch
 import torch.nn as nn
 from torchvision.models.resnet import resnet50
-from torchvision.models.mobilenet import mobilenet_v2, InvertedResidual
-from ssd.modules import *
+from modules import *
 
 class Base(nn.Module):
     def __init__(self):
