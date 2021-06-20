@@ -171,9 +171,9 @@ class SSDLite(Base):
 
     def forward(self, x):
         y, x = self.feature_extractor(x)
-        detection_feed = [y, x]
+        detection_feed = [y, x[0]]
         for l in self.additional_blocks:
             x = l(x)
-            detection_feed.append(x)
+            detection_feed.append(x[0])
         locs, confs = self.bbox_view(detection_feed, self.loc, self.conf)
         return locs, confs
