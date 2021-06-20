@@ -13,13 +13,14 @@ def train(model, train_loader, epoch, writer, criterion, optimizer, scheduler, i
     num_iter_per_epoch = len(train_loader)
     progress_bar = tqdm(train_loader)
     scheduler.step()
-    for i, (img, _, _, gloc, glabel) in enumerate(progress_bar):
+    for i, (img, lp_img, _, _, gloc, glabel) in enumerate(progress_bar):
         if torch.cuda.is_available():
             img = img.cuda()
+            lp_img = lp_img.cuda()
             gloc = gloc.cuda()
             glabel = glabel.cuda()
 
-        ploc, plabel = model(img)
+        ploc, plabel = model([img,lp_img])
         ploc, plabel = ploc.float(), plabel.float()
         gloc = gloc.transpose(1, 2).contiguous()
         loss = criterion(ploc, plabel, gloc, glabel)
@@ -41,13 +42,14 @@ def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold):
     model.eval()
     detections = []
     category_ids = test_loader.dataset.coco.getCatIds()
-    for nbatch, (img, img_id, img_size, _, _) in enumerate(test_loader):
+    for nbatch, (img, lp_img, img_id, img_size, _, _) in enumerate(test_loader):
         print("Parsing batch: {}/{}".format(nbatch, len(test_loader)), end="\r")
         if torch.cuda.is_available():
             img = img.cuda()
+            lp_img = lp_img.cuda()
         with torch.no_grad():
             # Get predictions
-            ploc, plabel = model(img)
+            ploc, plabel = model([img, lp_img])
             ploc, plabel = ploc.float(), plabel.float()
 
             for idx in range(ploc.shape[0]):

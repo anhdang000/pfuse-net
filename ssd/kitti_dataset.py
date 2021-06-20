@@ -58,6 +58,7 @@ class Kitti(VisionDataset):
         self.images = []
         self.lp_images = []
         self.targets = []
+        self.img_ids = []
         self.root = root
         self.mode = mode
         self._location = "training" if self.mode == "train" or self.mode =="val" else "testing"
@@ -74,6 +75,7 @@ class Kitti(VisionDataset):
 
         img_files = os.listdir(image_dir)
         length = int(0.7*len(img_files))
+
         if self.mode == "train":
             img_files = img_files[:length]
 
@@ -84,6 +86,7 @@ class Kitti(VisionDataset):
         for img_file in img_files:
             self.lp_images.append(os.path.join(lp_dir, img_file))
             self.images.append(os.path.join(image_dir, img_file))
+            self.img_ids.append(img_file)
             if self.mode == "train" or self.mode == "val":
                 self.targets.append(
                     os.path.join(labels_dir, f"{img_file.split('.')[0]}.txt")
@@ -95,7 +98,7 @@ class Kitti(VisionDataset):
                 Args:
                     index (int): Index
                 Returns:
-                    tuple: (image, target), where
+                    tuple: (image, lp_img, img_id,target ), where
                     target is a list of dictionaries with the following keys:
 
                     - type: str
@@ -110,10 +113,11 @@ class Kitti(VisionDataset):
                 """
         image = Image.open(self.images[index])
         lp_image = Image.open(self.lp_images[index])
+        image_id = self.img_ids[index]
         target = self._parse_target(index) if self.mode == "train" or self.mode == "val" else None
         if self.transforms:
             image, target = self.transforms(image, target)
-        return image, lp_image, target
+        return image, lp_image, image_id,target
 
     def _parse_target(self, index: int) -> List:
         target = []
@@ -188,7 +192,7 @@ class KittiDataset(Kitti):
             counter += 1
 
     def __getitem__(self, item):
-        image, lp_image, target = super(KittiDataset, self).__getitem__(item)
+        image, lp_image, image_id,target = super(KittiDataset, self).__getitem__(item)
         width, height = image.size
         boxes = []
         labels = []
@@ -202,4 +206,4 @@ class KittiDataset(Kitti):
         labels = torch.tensor(labels)
         if self.transform is not None:
             image, lp_image, (height, width), boxes, labels = self.transform(image, lp_image, (height, width), boxes, labels)
-        return image, lp_image, (height, width), boxes, labels
+        return image, lp_image, image_id,(height, width), boxes, labels

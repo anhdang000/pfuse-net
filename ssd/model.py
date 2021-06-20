@@ -1,10 +1,12 @@
 """
-@author: Viet Nguyen <nhviet1009@gmail.com>
+Modify works of @author: Viet Nguyen <nhviet1009@gmail.com>
+to add Parallel modules by TuyenNQ <s1262008@u-aizu.ac.jp>
 """
 import torch
 import torch.nn as nn
 from torchvision.models.resnet import resnet50
 from torchvision.models.mobilenet import mobilenet_v2, InvertedResidual
+from modules import *
 
 class Base(nn.Module):
     def __init__(self):
@@ -32,9 +34,11 @@ class ResNet(nn.Module):
         super().__init__()
         backbone = resnet50(pretrained=True)
         self.out_channels = [1024, 512, 512, 256, 256, 256]
-        self.feature_extractor = nn.Sequential(*list(backbone.children())[:7])
+        # TuyenNQ modified
+        layers_backbone = [ModuleParallel(child) for child in list(backbone.children())[:7]]
+        self.feature_extractor = nn.Sequential(*layers_backbone)
 
-        conv4_block1 = self.feature_extractor[-1][0]
+        conv4_block1 = self.feature_extractor[-1].module[0]
         conv4_block1.conv1.stride = (1, 1)
         conv4_block1.conv2.stride = (1, 1)
         conv4_block1.downsample[0].stride = (1, 1)
@@ -45,16 +49,17 @@ class ResNet(nn.Module):
 
 
 class SSD(Base):
-    def __init__(self, backbone=ResNet(), num_classes=81):
+    def __init__(self, backbone=ResNet(), num_classes=81, num_parallel=2):
         super().__init__()
 
         self.feature_extractor = backbone
         self.num_classes = num_classes
-        self._build_additional_features(self.feature_extractor.out_channels)
+        self.num_parallel = num_parallel # TuyenNQ modified
+        self._build_additional_features(self.feature_extractor.out_channels, self.num_parallel)
         self.num_defaults = [4, 6, 6, 6, 4, 4]
         self.loc = []
         self.conf = []
-
+        #TuyenNQ modified: Since step for predict bbox we only compute from rgb image so no need to Parallel here
         for nd, oc in zip(self.num_defaults, self.feature_extractor.out_channels):
             self.loc.append(nn.Conv2d(oc, nd * 4, kernel_size=3, padding=1))
             self.conf.append(nn.Conv2d(oc, nd * self.num_classes, kernel_size=3, padding=1))
@@ -63,27 +68,30 @@ class SSD(Base):
         self.conf = nn.ModuleList(self.conf)
         self.init_weights()
 
-    def _build_additional_features(self, input_size):
+    def _build_additional_features(self, input_size, num_parallel):
         self.additional_blocks = []
         for i, (input_size, output_size, channels) in enumerate(
                 zip(input_size[:-1], input_size[1:], [256, 256, 128, 128, 128])):
             if i < 3:
+                #TuyenNQ modified
                 layer = nn.Sequential(
-                    nn.Conv2d(input_size, channels, kernel_size=1, bias=False),
-                    nn.BatchNorm2d(channels),
-                    nn.ReLU(inplace=True),
-                    nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False),
-                    nn.BatchNorm2d(output_size),
-                    nn.ReLU(inplace=True),
+                    ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
+                    BatchNorm2dParallel(64, num_parallel),
+                    ModuleParallel(nn.ReLU(inplace=True)),
+                    Concatenate(channels),
+                    ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
+                    BatchNorm2dParallel(output_size, num_parallel),
+                    ModuleParallel(nn.ReLU(inplace=True)),
                 )
             else:
                 layer = nn.Sequential(
-                    nn.Conv2d(input_size, channels, kernel_size=1, bias=False),
-                    nn.BatchNorm2d(channels),
-                    nn.ReLU(inplace=True),
-                    nn.Conv2d(channels, output_size, kernel_size=3, bias=False),
-                    nn.BatchNorm2d(output_size),
-                    nn.ReLU(inplace=True),
+                    ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
+                    BatchNorm2dParallel(channels, num_parallel),
+                    ModuleParallel(nn.ReLU(inplace=True)),
+                    Concatenate(channels),
+                    ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
+                    BatchNorm2dParallel(output_size, num_parallel),
+                    ModuleParallel(nn.ReLU(inplace=True)),
                 )
 
             self.additional_blocks.append(layer)
@@ -93,10 +101,10 @@ class SSD(Base):
 
     def forward(self, x):
         x = self.feature_extractor(x)
-        detection_feed = [x]
+        detection_feed = [x[0]] # Take only output of rgb to predict bbox
         for l in self.additional_blocks:
             x = l(x)
-            detection_feed.append(x)
+            detection_feed.append(x[0])
         locs, confs = self.bbox_view(detection_feed, self.loc, self.conf)
         return locs, confs
 
@@ -107,9 +115,10 @@ feature_maps = {}
 class MobileNetV2(nn.Module):
     def __init__(self):
         super().__init__()
-        self.feature_extractor = mobilenet_v2(pretrained=True).features
-        self.feature_extractor[14].conv[0][2].register_forward_hook(self.get_activation())
-
+        features = mobilenet_v2(pretrained=True).features
+        features[14].conv[0][2].register_forward_hook(self.get_activation())
+        layers = [ModuleParallel(module) for module in features]
+        self.feature_extractor = nn.Sequential(*layers)
     def get_activation(self):
         def hook(self, input, output):
             feature_maps[0] = output.detach()
@@ -121,7 +130,7 @@ class MobileNetV2(nn.Module):
         return feature_maps[0], x
 
 
-def SeperableConv2d(in_channels, out_channels, kernel_size=3):
+def SeperableConv2d(in_channels, out_channels,kernel_size=3):
     padding = (kernel_size - 1) // 2
     return nn.Sequential(
         nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=kernel_size,
@@ -144,12 +153,15 @@ class SSDLite(Base):
         super(SSDLite, self).__init__()
         self.feature_extractor = backbone
         self.num_classes = num_classes
-
+        # Add Concat Layers, can reduce or change position of Concat Layers
         self.additional_blocks = nn.ModuleList([
-            InvertedResidual(1280, 512, stride=2, expand_ratio=0.2),
-            InvertedResidual(512, 256, stride=2, expand_ratio=0.25),
-            InvertedResidual(256, 256, stride=2, expand_ratio=0.5),
-            InvertedResidual(256, 64, stride=2, expand_ratio=0.25)
+            ModuleParallel(InvertedResidual(1280, 512, stride=2, expand_ratio=0.2)),
+            Concatenate(512),
+            ModuleParallel(InvertedResidual(512, 256, stride=2, expand_ratio=0.25)),
+            Concatenate(256),
+            ModuleParallel(InvertedResidual(256, 256, stride=2, expand_ratio=0.5)),
+            Concatenate(256),
+            ModuleParallel(InvertedResidual(256, 64, stride=2, expand_ratio=0.25))
         ])
         header_channels = [round(576 * width_mul), 1280, 512, 256, 256, 64]
         self.loc = StackedSeperableConv2d(header_channels, 4)
