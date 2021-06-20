@@ -2,3 +2,6 @@ data/
 .vscode/
 __pycache__/
 .idea/
+tensorboard/
+trained_models/
+*.png
