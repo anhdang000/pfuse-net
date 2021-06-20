@@ -9,7 +9,7 @@ import torch
 import torchvision.transforms as transforms
 from torchvision.ops.boxes import box_iou
 
-from src.utils import Encoder
+from ssd.utils import Encoder
 
 
 class SSDCropping(object):
@@ -142,8 +142,8 @@ class SSDTransformer(object):
             label_out[:labels.size(0)] = labels
             return self.trans_val(img), self.lp_img_trans(lp_img), img_size, bbox_out, label_out
 
-        img, lp_img,img_size, bboxes, labels = self.crop(img, lp_img,img_size, bboxes, labels)
-        img, lp_img,bboxes = self.hflip(img, lp_img, bboxes)
+        img, lp_img, img_size, bboxes, labels = self.crop(img, lp_img, img_size, bboxes, labels)
+        img, lp_img, bboxes = self.hflip(img, lp_img, bboxes)
 
         img = self.img_trans(img).contiguous()
         lp_img = self.lp_img_trans(lp_img).contiguous()
