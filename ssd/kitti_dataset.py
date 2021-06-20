@@ -14,6 +14,9 @@ from torchvision.datasets import VisionDataset
 from torch.utils.data.dataloader import default_collate
 import torch
 
+# Load config
+from ssd.config import *
+
 
 def collate_fn(batch):
     items = list(zip(*batch))
@@ -35,9 +38,9 @@ class Kitti(VisionDataset):
     #     "data_object_label_2.zip",
     # ]
 
-    image_dir_name = "image_2"
-    labels_dir_name = "label_2"
-    lp_dir_name = "lp_image"
+    image_dir_name = IMAGE_DIR
+    labels_dir_name = LABEL_DIR
+    lp_dir_name = LPIMAGE_DIR
 
     def __init__(
             self,
@@ -177,11 +180,6 @@ class KittiDataset(Kitti):
         self.transform = transform
 
     def _load_categories(self):
-        KITTI_CLASSES = [
-            'BG', 'Car', 'Van', 'Truck',
-            'Pedestrian', 'Person_sitting',
-            'Cyclist', 'Tram', 'Misc', 'DontCare'
-        ]
         self.label_map = {}
         self.label_info = {}
         counter = 1

@@ -10,35 +10,36 @@ from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from ssd.model import SSD, SSDLite, ResNet, MobileNetV2
+from ssd.model import SSD, SSDLite, ResNet, MobileNetV2, SSD_parallel
 from ssd.utils import generate_dboxes, Encoder, kitti_classes
 from ssd.transform import SSDTransformer
 from ssd.loss import Loss
 from ssd.process import train, evaluate
 from ssd.kitti_dataset import collate_fn, KittiDataset
 
+# Load config
+from ssd.config import *
+
 
 def get_args():
     parser = ArgumentParser(description="Implementation of SSD")
-    parser.add_argument("--root", type=str, default="/coco",
-                        help="the root folder of dataset")
-    parser.add_argument("--save-folder", type=str, default="trained_models",
+    parser.add_argument("--save-folder", type=str, default=SAVE_FOLDER,
                         help="path to folder containing model checkpoint file")
-    parser.add_argument("--log-path", type=str, default="tensorboard/SSD")
+    parser.add_argument("--log-path", type=str, default=LOG_PATH)
 
-    parser.add_argument("--epochs", type=int, default=65, help="number of total epochs to run")
-    parser.add_argument("--batch-size", type=int, default=32, help="number of samples for each iteration")
-    parser.add_argument("--multistep", nargs="*", type=int, default=[43, 54],
+    parser.add_argument("--epochs", type=int, default=NUM_EPOCHS, help="number of total epochs to run")
+    parser.add_argument("--batch-size", type=int, default=BATCH_SIZE, help="number of samples for each iteration")
+    parser.add_argument("--multistep", nargs="*", type=int, default=MULTI_STEPS,
                         help="epochs at which to decay learning rate")
     parser.add_argument("--amp", action='store_true', help="Enable mixed precision training")
 
-    parser.add_argument("--lr", type=float, default=2.6e-3, help="initial learning rate")
-    parser.add_argument("--momentum", type=float, default=0.9, help="momentum argument for SGD optimizer")
-    parser.add_argument("--weight-decay", type=float, default=0.0005, help="momentum argument for SGD optimizer")
-    parser.add_argument("--nms-threshold", type=float, default=0.5)
-    parser.add_argument("--num-workers", type=int, default=4)
+    parser.add_argument("--lr", type=float, default=LR, help="initial learning rate")
+    parser.add_argument("--momentum", type=float, default=MOMENTUM, help="momentum argument for SGD optimizer")
+    parser.add_argument("--weight-decay", type=float, default=WEIGHT_DECAY, help="momentum argument for SGD optimizer")
+    parser.add_argument("--nms-threshold", type=float, default=NMS_THRESHOLD)
+    parser.add_argument("--num-workers", type=int, default=NUM_WORKERS)
 
-    parser.add_argument('--local_rank', default=0, type=int,
+    parser.add_argument('--local_rank', default=LOCAL_RANK, type=int,
                         help='Used for multi-process training. Can either be manually set ' +
                              'or automatically set by using \'python -m multiproc\'.')
     args = parser.parse_args()
@@ -68,11 +69,11 @@ def train_detector(opt):
 
 
     dboxes = generate_dboxes(model="ssd")
-    model = SSD(backbone=ResNet(), num_classes=len(kitti_classes))
+    model = SSD_parallel(backbone=ResNet(), num_classes=len(kitti_classes))
 
-    train_set = KittiDataset(opt.root, "train", SSDTransformer(dboxes, (300, 300), val=False))
+    train_set = KittiDataset(ROOT, "train", SSDTransformer(dboxes, (300, 300), val=False))
     train_loader = DataLoader(train_set, **train_params)
-    test_set = KittiDataset(opt.root, "val", SSDTransformer(dboxes, (300, 300), val=True))
+    test_set = KittiDataset(ROOT, "val", SSDTransformer(dboxes, (300, 300), val=True))
     test_loader = DataLoader(test_set, **test_params)
 
     encoder = Encoder(dboxes)

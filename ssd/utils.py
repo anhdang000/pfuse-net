@@ -6,7 +6,6 @@ import itertools
 from math import sqrt
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.ops.boxes import box_iou, box_convert
 
@@ -39,12 +38,6 @@ coco_colors = [None, (39, 129, 113), (164, 80, 133), (83, 122, 114), (99, 81, 17
         (81, 175, 64), (178, 19, 157), (74, 188, 190), (18, 114, 2), (62, 128, 96), (21, 3, 150), (0, 6, 95),
         (2, 20, 184), (122, 37, 185)]
 
-# ---------------- KITTI DATASET -----------------------
-kitti_classes = ['_background_', 'Car', 'Van', 'Truck', 'Pedestrian', 'Person_sitting', 
-                'Cyclist', 'Tram', 'Misc', 'DontCare']
-
-kitti_colors = [None, (39, 129, 113), (21, 35, 42), (49, 119, 155), (7, 185, 124), (46, 34, 146), 
-        (105, 184, 169), (22, 18, 5), (147, 71, 73), (181, 64, 91)]
 
 class Encoder(object):
     """
@@ -233,24 +226,3 @@ def generate_dboxes(model="ssd"):
         aspect_ratios = [[2,3], [2, 3], [2, 3], [2, 3], [2,3], [2,3]]
         dboxes = DefaultBoxes(figsize, feat_size, steps, scales, aspect_ratios)
     return dboxes
-
-class L2Norm(nn.Module):
-    def __init__(self, input_channels=512, scale=20):
-        super(L2Norm, self).__init__()
-        self.weight = nn.Parameter(torch.Tensor(input_channels))
-        self.scale = scale
-        self.reset_parameters()
-        self.eps = 1e-10
-    
-    def reset_parameters(self):
-        nn.init.constant_(self.weight, self.scale)
-    
-    def forward(self, x):
-        # x.size() = (batch_size, chanenel, height, width)
-        # L2Norm
-        norm = x.pow(2).sum(dim=1, keepdim=True).sqrt() + self.eps
-        x = torch.div(x, norm)
-        #weight.size() = (512) -> (1,512,1,1)
-        weights = self.weight.unsqueeze(0).unsqueeze(2).unsqueeze(3).expand_as(x)
-
-        return weights*x
