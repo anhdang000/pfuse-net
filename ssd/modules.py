@@ -9,7 +9,7 @@ class Concatenate(nn.Module):
         self.conv = nn.Conv2d(2*channels, channels, kernel_size=1, bias=False)
     def forward(self, x):
         rgb_x, lp_x = x[0], x[1]
-        result = torch.cat((rgb_x, lp_x), dim=2)
+        result = torch.cat((rgb_x, lp_x), dim=1)
         result = self.conv(result)
         return [result, lp_x]
 
