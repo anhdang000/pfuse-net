@@ -1,46 +1,35 @@
-import numpy as np
+# ---------------- KITTI DATASET -----------------------
+KITTI_CLASSES = [
+    '_background_', 'Car', 'Van', 'Truck', 'Pedestrian', 
+    'Person_sitting', 'Cyclist', 'Tram', 'Misc', 'DontCare'
+    ]
 
-# DATASET PARAMETERS
-DATASET = 'nyudv2'
-TRAIN_DIR = './data/nyudv2'  # 'Modify data path'
-VAL_DIR = TRAIN_DIR
-TRAIN_LIST = './data/nyudv2/train.txt'
-VAL_LIST = './data/nyudv2/val.txt'
+KITTI_COLORS = [
+    None, (39, 129, 113), (21, 35, 42), (49, 119, 155), (7, 185, 124), 
+    (46, 34, 146), (105, 184, 169), (22, 18, 5), (147, 71, 73), (181, 64, 91)
+    ]
 
 
-SHORTER_SIDE = 350
-CROP_SIZE = 500
-RESIZE_SIZE = None
+# ---------------- DATASET PATH ------------------------
+ROOT = '../stereo_datasets'
+IMAGE_DIR = 'image_2'
+LABEL_DIR = 'label_2'
+LPIMAGE_DIR = 'lp_image'
 
-NORMALISE_PARAMS = [1./255,  # Image SCALE
-                    np.array([0.485, 0.456, 0.406]).reshape((1, 1, 3)),  # Image MEAN
-                    np.array([0.229, 0.224, 0.225]).reshape((1, 1, 3)),  # Image STD
-                    1./5000]  # Depth SCALE
-BATCH_SIZE = 4
-NUM_WORKERS = 16
-NUM_CLASSES = 40
-LOW_SCALE = 0.5
-HIGH_SCALE = 2.0
-IGNORE_LABEL = 255
 
-# ENCODER PARAMETERS
-ENC = '101'  # ResNet101
-ENC_PRETRAINED = True  # pre-trained on ImageNet or randomly initialised
+# ---------------- LOGGING -----------------------------
+SAVE_FOLDER = 'trained_models'
+LOG_PATH = 'tensorboard/SSD'
 
-# GENERAL
-FREEZE_BN = True
-NUM_SEGM_EPOCHS = [100] * 3  # [150] * 3 if using ResNet152 as backbone
-PRINT_EVERY = 10
-RANDOM_SEED = 42
-VAL_EVERY = 5  # how often to record validation scores
 
-# OPTIMISERS' PARAMETERS
-LR_ENC = [5e-4, 2.5e-4, 1e-4]  # TO FREEZE, PUT 0
-LR_DEC = [3e-3, 1.5e-3, 7e-4]
-MOM_ENC = 0.9  # TO FREEZE, PUT 0
-MOM_DEC = 0.9
-WD_ENC = 1e-5  # TO FREEZE, PUT 0
-WD_DEC = 1e-5
-LAMDA = 2e-4  # slightly better
-BN_threshold = 2e-2  # slightly better
-OPTIM_DEC = 'sgd'
+# ---------------- TRAINING CONFIGURATIONS -------------
+NUM_EPOCHS = 60
+BATCH_SIZE = 16
+MULTI_STEPS = [40, 52]
+LR = 2.6e-3
+MOMENTUM = 0.9
+WEIGHT_DECAY = 0.0005
+NMS_THRESHOLD = 0.5
+NUM_WORKERS = 4
+
+LOCAL_RANK = 0
