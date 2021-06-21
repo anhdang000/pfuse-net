@@ -6,10 +6,9 @@ import numpy as np
 from tqdm.autonotebook import tqdm
 import torch
 from pycocotools.cocoeval import COCOeval
-from apex import amp
 
 
-def train(model, train_loader, epoch, writer, criterion, optimizer, scheduler, is_amp):
+def train(model, train_loader, epoch, writer, criterion, optimizer, scheduler):
     model.train()
     num_iter_per_epoch = len(train_loader)
     progress_bar = tqdm(train_loader)
@@ -30,11 +29,7 @@ def train(model, train_loader, epoch, writer, criterion, optimizer, scheduler, i
 
         writer.add_scalar("Train/Loss", loss.item(), epoch * num_iter_per_epoch + i)
 
-        if is_amp:
-            with amp.scale_loss(loss, optimizer) as scale_loss:
-                scale_loss.backward()
-        else:
-            loss.backward()
+        loss.backward()
         optimizer.step()
         optimizer.zero_grad()
 

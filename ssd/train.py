@@ -50,13 +50,7 @@ def get_args():
 
 
 def train_detector(opt):
-    if torch.cuda.is_available():
-        torch.distributed.init_process_group(backend='nccl', init_method='env://')
-        num_gpus = torch.distributed.get_world_size()
-        torch.cuda.manual_seed(123)
-    else:
-        torch.manual_seed(123)
-        num_gpus = 1
+    num_gpus = torch.cuda.device_count()
 
     train_params = {"batch_size": opt.batch_size * num_gpus,
                     "shuffle": True,
@@ -90,15 +84,15 @@ def train_detector(opt):
         model.cuda()
         criterion.cuda()
 
-        if opt.amp:
-            from apex import amp
-            from apex.parallel import DistributedDataParallel as DDP
-            model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
-        else:
-            from torch.nn.parallel import DistributedDataParallel as DDP
+        # if opt.amp:
+        #     from apex import amp
+        #     from apex.parallel import DistributedDataParallel as DDP
+        #     model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
+        # else:
+        #     from torch.nn.parallel import DistributedDataParallel as DDP
         # It is recommended to use DistributedDataParallel, instead of DataParallel
         # to do multi-GPU training, even if there is only a single node.
-        model = DDP(model)
+        # model = DDP(model)
 
     if os.path.isdir(opt.log_path):
         shutil.rmtree(opt.log_path)
@@ -120,7 +114,7 @@ def train_detector(opt):
         first_epoch = 0
 
     for epoch in range(first_epoch, opt.epochs):
-        train(model, train_loader, epoch, writer, criterion, optimizer, scheduler, opt.amp)
+        train(model, train_loader, epoch, writer, criterion, optimizer, scheduler)
         evaluate(model, test_loader, epoch, writer, encoder, opt.nms_threshold)
 
         checkpoint = {"epoch": epoch,
