@@ -15,10 +15,7 @@ class Concatenate(nn.Module):
 
 
 class Exchange(nn.Module):
-    """
-    Channel Exchange module from paper
-    ref https://arxiv.org/abs/2011.05005
-    """
+ 
     def __init__(self):
         super(Exchange, self).__init__()
 
