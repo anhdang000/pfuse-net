@@ -87,19 +87,13 @@ class Kitti(VisionDataset):
         if self.mode == "train" or self.mode == "val":
             labels_dir = os.path.join(self.root, self._location,self.labels_dir_name)
         for img_file in img_files:
-            if img_file == "train.cache" or img_file == "val.cache":
-                continue
-            im_file = os.path.join(image_dir, img_file)
-            lp_file = os.path.join(lp_dir, img_file)
-            label_file = os.path.join(labels_dir, f"{img_file.split('.')[0]}.txt")
-            if os.path.exists(label_file) and os.path.exists(im_file) and os.path.exists(lp_file):
-                self.lp_images.append(lp_file)
-                self.images.append(im_file)
-                self.img_ids.append(img_file)
+            self.lp_images.append(os.path.join(lp_dir, img_file))
+            self.images.append(os.path.join(image_dir, img_file))
+            self.img_ids.append(img_file)
             if self.mode == "train" or self.mode == "val":
-                label_file = os.path.join(labels_dir, f"{img_file.split('.')[0]}.txt")
-                if os.path.exists(label_file):
-                    self.targets.append(label_file)
+                self.targets.append(
+                    os.path.join(labels_dir, f"{img_file.split('.')[0]}.txt")
+                )
 
     def __getitem__(self, index):
         """Get item at a given index.
