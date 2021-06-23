@@ -91,9 +91,9 @@ class Kitti(VisionDataset):
             self.images.append(os.path.join(image_dir, img_file))
             self.img_ids.append(img_file)
             if self.mode == "train" or self.mode == "val":
-                self.targets.append(
-                    os.path.join(labels_dir, f"{img_file.split('.')[0]}.txt")
-                )
+                label_file = os.path.join(labels_dir, f"{img_file.split('.')[0]}.txt")
+                if os.path.exists(label_file):
+                    self.targets.append(label_file)
 
     def __getitem__(self, index):
         """Get item at a given index.
