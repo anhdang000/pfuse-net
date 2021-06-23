@@ -1,9 +1,11 @@
 """
 @author: Viet Nguyen <nhviet1009@gmail.com>
+Modified by Son Nguyen - son.nt185900@sis.hust.edu.vn
 """
 import numpy as np
 import tqdm
 import torch
+from collections import Counter
 # from pycocotools.cocoeval import COCOeval
 # from apex import amp
 
@@ -42,7 +44,7 @@ def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold):
     model.eval()
     detections = []
     true_boxes = []
-    category_ids = test_loader.dataset.coco.getCatIds()
+    category_ids = test_loader.dataset.coco.getCatIds()  #Chưa biết fix kiểu gì 
     for nbatch, (img, lp_img, img_id, img_size, img_box, img_label) in enumerate(test_loader):
         print("Parsing batch: {}/{}".format(nbatch, len(test_loader)), end="\r")
         true_boxes.append([img_id, img_label, *img_box])
@@ -69,10 +71,10 @@ def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold):
                     detections.append([img_id[idx], category_ids[label_ - 1], prob_, loc_[0] * width, loc_[1] * height, (loc_[2] - loc_[0]) * width,
                                        (loc_[3] - loc_[1]) * height])
 
-    detections = np.array(detections, dtype=np.float32)
-
-    map = mean_average_precision(detections, true_boxes)
-    print('mAP: ', map)
+        detections = np.array(detections, dtype=np.float32)
+        map = mean_average_precision(detections, true_boxes)
+        writer.add_scalar("Test/mAP", map, epoch)
+        detections = detections.tolist()
 
     # coco_eval = COCOeval(test_loader.dataset.coco, test_loader.dataset.coco.loadRes(detections), iouType="bbox")
     # coco_eval.evaluate()
@@ -86,7 +88,6 @@ def intersection_over_union(boxes_preds, boxes_labels):
     Parameters:
         boxes_preds (tensor): Predictions of Bounding Boxes (BATCH_SIZE, 4)
         boxes_labels (tensor): Correct Labels of Boxes (BATCH_SIZE, 4)
-        box_format (str): midpoint/corners, if boxes (x,y,w,h) or (x1,y1,x2,y2)
     Returns:
         tensor: Intersection over union for all examples
     """
@@ -115,9 +116,7 @@ def intersection_over_union(boxes_preds, boxes_labels):
 
     return intersection / (box1_area + box2_area - intersection + 1e-6)
 
-def mean_average_precision(
-    pred_boxes, true_boxes, iou_threshold=0.5, num_classes=7
-):
+def mean_average_precision(pred_boxes, true_boxes, iou_threshold=0.5, num_classes=9):
     """
     Calculates mean average precision 
     Parameters:
@@ -125,14 +124,13 @@ def mean_average_precision(
         specified as [train_idx, class_prediction, prob_score, x1, y1, x2, y2]
         true_boxes (list): Similar as pred_boxes except all the correct ones 
         iou_threshold (float): threshold where predicted bboxes is correct
-        box_format (str): "midpoint" or "corners" used to specify bboxes
-        num_classes (int): number of classes
+        num_classes (int): number of classes(Car/Van/Truck/Pedestrian
+                            /Person_sitting/Cyclist/Tram/Misc/DontCare)
     Returns:
         float: mAP value across all classes given a specific IoU threshold 
     """
 
     average_precisions = []
-
     epsilon = 1e-6
 
     for c in range(num_classes):
@@ -184,9 +182,7 @@ def mean_average_precision(
             for idx, gt in enumerate(ground_truth_img):
                 iou = intersection_over_union(
                     torch.tensor(detection[3:]),
-                    torch.tensor(gt[3:]),
-                    box_format=box_format,
-                )
+                    torch.tensor(gt[3:]))
 
                 if iou > best_iou:
                     best_iou = iou
