@@ -75,7 +75,7 @@ class SSD_parallel(Base):
                 #TuyenNQ modified
                 layer = nn.Sequential(
                     ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
-                    BatchNorm2dParallel(64, num_parallel),
+                    BatchNorm2dParallel(channels, num_parallel),
                     ModuleParallel(nn.ReLU(inplace=True)),
                     ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
                     Concatenate(channels),
