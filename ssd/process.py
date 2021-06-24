@@ -6,6 +6,7 @@ import numpy as np
 import tqdm
 import torch
 from collections import Counter
+from config import KITTI_CLASSES
 # from pycocotools.cocoeval import COCOeval
 # from apex import amp
 
@@ -44,7 +45,7 @@ def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold):
     model.eval()
     detections = []
     true_boxes = []
-    category_ids = test_loader.dataset.coco.getCatIds()  #Chưa biết fix kiểu gì 
+    category_ids = KITTI_CLASSES
     for nbatch, (img, lp_img, img_id, img_size, img_box, img_label) in enumerate(test_loader):
         print("Parsing batch: {}/{}".format(nbatch, len(test_loader)), end="\r")
         true_boxes.append([img_id, img_label, *img_box])
@@ -124,7 +125,7 @@ def mean_average_precision(pred_boxes, true_boxes, iou_threshold=0.5, num_classe
         specified as [train_idx, class_prediction, prob_score, x1, y1, x2, y2]
         true_boxes (list): Similar as pred_boxes except all the correct ones 
         iou_threshold (float): threshold where predicted bboxes is correct
-        num_classes (int): number of classes(Car/Van/Truck/Pedestrian
+        num_classes (int): number of classes(_background/Car/Van/Truck/Pedestrian
                             /Person_sitting/Cyclist/Tram/Misc/DontCare)
     Returns:
         float: mAP value across all classes given a specific IoU threshold 
@@ -182,7 +183,7 @@ def mean_average_precision(pred_boxes, true_boxes, iou_threshold=0.5, num_classe
             for idx, gt in enumerate(ground_truth_img):
                 iou = intersection_over_union(
                     torch.tensor(detection[3:]),
-                    torch.tensor(gt[3:]))
+                    torch.tensor(gt[2:]))
 
                 if iou > best_iou:
                     best_iou = iou
