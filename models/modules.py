@@ -2,7 +2,6 @@ import torch.nn as nn
 import torch
 
 
-#Add a class for Concat module here:
 class Concatenate(nn.Module):
     def __init__(self, channels):
         super(Concatenate, self).__init__()
@@ -13,6 +12,13 @@ class Concatenate(nn.Module):
         result = self.conv(result)
         return [result, lp_x]
 
+
+class RGBLPFusion(nn.Module):
+    def __init__(self, channels):
+        super(RGBLPFusion, self).__init__()
+
+    def forward(self, x_parallel):
+        
 
 class Exchange(nn.Module):
     def __init__(self):

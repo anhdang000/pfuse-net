@@ -127,36 +127,6 @@ class Kitti(VisionDataset):
     def __len__(self) -> int:
         return len(self.images)
 
-    # @property
-    # def _raw_folder(self) -> str:
-    #     return os.path.join(self.root, self.__class__.__name__, "raw")
-    #
-    # def _check_exists(self) -> bool:
-    #     """Check if the data directory exists."""
-    #     folders = [self.image_dir_name]
-    #     if self.train:
-    #         folders.append(self.labels_dir_name)
-    #     return all(
-    #         os.path.isdir(os.path.join(self._raw_folder, self._location, fname))
-    #         for fname in folders
-    #     )
-    #
-    # def download(self) -> None:
-    #     """Download the KITTI data if it doesn't exist already."""
-    #
-    #     if self._check_exists():
-    #         return
-    #
-    #     os.makedirs(self._raw_folder, exist_ok=True)
-    #
-    #     # download files
-    #     for fname in self.resources:
-    #         download_and_extract_archive(
-    #             url=f"{self.data_url}{fname}",
-    #             download_root=self._raw_folder,
-    #             filename=fname,
-    #         )
-
 
 class KittiDataset(Kitti):
     def __init__(self, root, mode, transform=None):

@@ -1,4 +1,4 @@
-from models.resnet import Base, ResNet
+from models.resnet import *
 
 class SSD(Base):
     def __init__(self, backbone=ResNet(), num_classes=81):
