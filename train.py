@@ -107,7 +107,7 @@ def train_detector(opt):
     if os.path.isfile(checkpoint_path):
         checkpoint = torch.load(checkpoint_path)
         first_epoch = checkpoint["epoch"] + 1
-        model.module.load_state_dict(checkpoint["model_state_dict"])
+        model.load_state_dict(checkpoint["model_state_dict"])
         scheduler.load_state_dict(checkpoint["scheduler"])
         optimizer.load_state_dict(checkpoint["optimizer"])
     else:
@@ -115,10 +115,11 @@ def train_detector(opt):
 
     for epoch in range(first_epoch, opt.epochs):
         train(model, train_loader, epoch, writer, criterion, optimizer, scheduler)
-        evaluate(model, test_loader, epoch, writer, encoder, opt.nms_threshold)
+        if epoch %10==0:
+            evaluate(model, test_loader, epoch, writer, encoder, opt.nms_threshold)
 
         checkpoint = {"epoch": epoch,
-                      "model_state_dict": model.module.state_dict(),
+                      "model_state_dict": model.state_dict(),
                       "optimizer": optimizer.state_dict(),
                       "scheduler": scheduler.state_dict()}
         torch.save(checkpoint, checkpoint_path)
