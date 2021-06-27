@@ -21,6 +21,5 @@ class ResNetFuse(nn.Module):
 		for layer in self.feature_extractor:
 			x = ModuleParallel(layer)
 			if type(layer) == nn.Sequential:
-				x_combined = SqueezeAndExciteFusionAdd(x[0].shape[1])
-				x = [x_combined, x[1]]
+				x = SqueezeAndExciteFusionAdd(x[0].shape[1])
 		return x

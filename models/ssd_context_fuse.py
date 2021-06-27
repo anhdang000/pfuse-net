@@ -1,5 +1,5 @@
 from models.resnet_fusion import *
-
+from models.modules import BatchNorm2dParallel, SqueezeAndExciteFusionAdd
 class SSDContextFuse(Base):
     def __init__(self, backbone=ResNetFuse(), num_classes=10, num_parallel=2):
         super().__init__()
@@ -30,8 +30,7 @@ class SSDContextFuse(Base):
                     ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
                     BatchNorm2dParallel(channels, num_parallel),
                     ModuleParallel(nn.ReLU(inplace=True)),
-                    #ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
-                    Concatenate(channels),
+                    SqueezeAndExciteFusionAdd(channels),
                     ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
                     BatchNorm2dParallel(output_size, num_parallel),
                     ModuleParallel(nn.ReLU(inplace=True)),
@@ -41,8 +40,7 @@ class SSDContextFuse(Base):
                     ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
                     BatchNorm2dParallel(channels, num_parallel),
                     ModuleParallel(nn.ReLU(inplace=True)),
-                    #ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
-                    Concatenate(channels),
+                    SqueezeAndExciteFusionAdd(channels),
                     ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
                     BatchNorm2dParallel(output_size, num_parallel),
                     ModuleParallel(nn.ReLU(inplace=True)),

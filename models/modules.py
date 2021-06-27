@@ -34,8 +34,7 @@ class SqueezeAndExciteFusionAdd(nn.Module):
         rgb, lp = x_parallel
         rgb = self.se_rgb(rgb)
         lp = self.se_lp(lp)
-        out = rgb + lp
-        return out
+        return [rgb + lp, lp]
 
 
 class Concatenate(nn.Module):
