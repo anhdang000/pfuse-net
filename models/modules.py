@@ -1,5 +1,41 @@
 import torch.nn as nn
 import torch
+import torch.nn.functional as F
+
+
+class SqueezeAndExcitation(nn.Module):
+    def __init__(self, channels,
+                 reduction=16, activation=nn.ReLU(inplace=True)):
+        super(SqueezeAndExcitation, self).__init__()
+        self.fc = nn.Sequential(
+            nn.Conv2d(channels, channels // reduction, kernel_size=1),
+            activation,
+            nn.Conv2d(channels // reduction, channels, kernel_size=1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        weighting = F.adaptive_avg_pool2d(x, 1)
+        weighting = self.fc(weighting)
+        y = x * weighting
+        return y
+        
+
+class SqueezeAndExciteFusionAdd(nn.Module):
+    def __init__(self, channels_in, activation=nn.ReLU(inplace=True)):
+        super(SqueezeAndExciteFusionAdd, self).__init__()
+
+        self.se_rgb = SqueezeAndExcitation(channels_in,
+                                           activation=activation)
+        self.se_lp = SqueezeAndExcitation(channels_in,
+                                             activation=activation)
+
+    def forward(self, x_parallel):
+        rgb, lp = x_parallel
+        rgb = self.se_rgb(rgb)
+        lp = self.se_lp(lp)
+        out = rgb + lp
+        return out
 
 
 class Concatenate(nn.Module):
@@ -12,13 +48,6 @@ class Concatenate(nn.Module):
         result = self.conv(result)
         return [result, lp_x]
 
-
-class RGBLPFusion(nn.Module):
-    def __init__(self, channels):
-        super(RGBLPFusion, self).__init__()
-
-    def forward(self, x_parallel):
-        
 
 class Exchange(nn.Module):
     def __init__(self):
