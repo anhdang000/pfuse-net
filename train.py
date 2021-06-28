@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 from argparse import ArgumentParser
 
@@ -13,8 +14,7 @@ from loss import Loss
 from process import train, evaluate
 from datasets import CocoDataset, KittiDataset
 
-# Load config
-from config import *
+from configs.utils import parse_config
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -22,87 +22,64 @@ warnings.filterwarnings("ignore")
 
 def get_args():
     parser = ArgumentParser(description="Implementation of SSD")
-    parser.add_argument('model', type=str, default='SSD', help='Select model')
-    parser.add_argument("--save-folder", type=str, default=SAVE_FOLDER,
-                        help="path to folder containing model checkpoint file")
-    parser.add_argument("--log-path", type=str, default=LOG_PATH)
-
-    parser.add_argument("--epochs", type=int, default=NUM_EPOCHS, help="number of total epochs to run")
-    parser.add_argument("--batch-size", type=int, default=BATCH_SIZE, help="number of samples for each iteration")
-    parser.add_argument("--multistep", nargs="*", type=int, default=MULTI_STEPS,
-                        help="epochs at which to decay learning rate")
-    parser.add_argument("--amp", action='store_true', help="Enable mixed precision training")
-
-    parser.add_argument("--lr", type=float, default=LR, help="initial learning rate")
-    parser.add_argument("--momentum", type=float, default=MOMENTUM, help="momentum argument for SGD optimizer")
-    parser.add_argument("--weight-decay", type=float, default=WEIGHT_DECAY, help="momentum argument for SGD optimizer")
-    parser.add_argument("--nms-threshold", type=float, default=NMS_THRESHOLD)
-    parser.add_argument("--num-workers", type=int, default=NUM_WORKERS)
-
-    parser.add_argument('--local_rank', default=LOCAL_RANK, type=int,
-                        help='Used for multi-process training. Can either be manually set ' +
-                             'or automatically set by using \'python -m multiproc\'.')
+    parser.add_argument('--config', type=str, help='Model config')
+    parser.add_argument('--resume', type=str, help='Checkpoint to resume')
     args = parser.parse_args()
+
     return args
 
 
-def train_detector(opt):
+def train_detector(cfg):
     num_gpus = torch.cuda.device_count()
 
-    train_params = {"batch_size": opt.batch_size * num_gpus,
+    train_params = {"batch_size": cfg.BATCH_SIZE * num_gpus,
                     "shuffle": True,
                     "drop_last": False,
-                    "num_workers": opt.num_workers}
+                    "num_workers": cfg.NUM_WORKERS}
 
-    test_params = {"batch_size": opt.batch_size * num_gpus,
+    test_params = {"batch_size": cfg.BATCH_SIZE * num_gpus,
                    "shuffle": False,
                    "drop_last": False,
-                   "num_workers": opt.num_workers}
+                   "num_workers": cfg.NUM_WORKERS}
 
     dboxes = generate_dboxes(model="ssd")
-    model = SSDConcat(backbone=ResNetParallel(), num_classes=len(KITTI_CLASSES))
+    model = SSDConcat(backbone=ResNetParallel(), num_classes=len(cfg.KITTI_CLASSES))
 
-    train_set = KittiDataset(ROOT, "train", SSDTransformer(dboxes, (300, 300), val=False))
+    if cfg.DATASET == 'KITTI':
+        train_set = KittiDataset(cfg.ROOT, "train", SSDTransformer(dboxes, (300, 300), val=False))
+        test_set = KittiDataset(cfg.ROOT, "val", SSDTransformer(dboxes, (300, 300), val=True))
+    elif cfg.DATASET == 'COCO':
+        train_set = CocoDataset(cfg.ROOT, 2017, "train", SSDTransformer(dboxes, (300, 300), val=False))
+        test_set = CocoDataset(cfg.ROOT, 2017, "val", SSDTransformer(dboxes, (300, 300), val=True))
+
     train_loader = DataLoader(train_set, **train_params)
-    test_set = KittiDataset(ROOT, "val", SSDTransformer(dboxes, (300, 300), val=True))
     test_loader = DataLoader(test_set, **test_params)
 
     encoder = Encoder(dboxes)
 
-    opt.lr = opt.lr * num_gpus * (opt.batch_size / 32)
+    cfg.lr = cfg.lr * num_gpus * (cfg.batch_size / 32)
     criterion = Loss(dboxes)
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr, momentum=opt.momentum,
-                                weight_decay=opt.weight_decay,
+    optimizer = torch.optim.SGD(model.parameters(), lr=cfg.lr, momentum=cfg.momentum,
+                                weight_decay=cfg.weight_decay,
                                 nesterov=True)
-    scheduler = MultiStepLR(optimizer=optimizer, milestones=opt.multistep, gamma=0.1)
+    scheduler = MultiStepLR(optimizer=optimizer, milestones=cfg.multistep, gamma=0.1)
 
     if torch.cuda.is_available():
         model.cuda()
         criterion.cuda()
 
-        # if opt.amp:
-        #     from apex import amp
-        #     from apex.parallel import DistributedDataParallel as DDP
-        #     model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
-        # else:
-        #     from torch.nn.parallel import DistributedDataParallel as DDP
-        # It is recommended to use DistributedDataParallel, instead of DataParallel
-        # to do multi-GPU training, even if there is only a single node.
-        # model = DDP(model)
+    if os.path.isdir(cfg.LOG_PATH):
+        shutil.rmtree(cfg.LOG_PATH)
+    os.makedirs(cfg.LOG_PATH)
 
-    if os.path.isdir(opt.log_path):
-        shutil.rmtree(opt.log_path)
-    os.makedirs(opt.log_path)
+    if not os.path.isdir(cfg.SAVE_FOLDER):
+        os.makedirs(cfg.SAVE_FOLDER)
 
-    if not os.path.isdir(opt.save_folder):
-        os.makedirs(opt.save_folder)
-    checkpoint_path = os.path.join(opt.save_folder, "SSD.pth")
+    writer = SummaryWriter(cfg.log_path)
 
-    writer = SummaryWriter(opt.log_path)
-
-    if os.path.isfile(checkpoint_path):
-        checkpoint = torch.load(checkpoint_path)
+    if args.resume.endswith('.pth') and os.path.isfile(args.resume):
+        checkpoint = torch.load(args.resume)
         first_epoch = checkpoint["epoch"] + 1
         model.load_state_dict(checkpoint["model_state_dict"])
         scheduler.load_state_dict(checkpoint["scheduler"])
@@ -110,18 +87,22 @@ def train_detector(opt):
     else:
         first_epoch = 0
 
-    for epoch in range(first_epoch, opt.epochs):
+    for epoch in range(first_epoch, cfg.NUM_EPOCHS):
         train(model, train_loader, epoch, writer, criterion, optimizer, scheduler)
-        if epoch %10==0:
-            evaluate(model, test_loader, epoch, writer, encoder, opt.nms_threshold)
-
-        checkpoint = {"epoch": epoch,
+        if epoch % cfg.SAVE_INTERVAL == 0:
+            print('Evaluating ...')
+            evaluate(model, test_loader, epoch, writer, encoder, cfg.NMS_THRESHOLD, cfg.CLASSES)
+            
+            checkpoint = {"epoch": epoch,
                       "model_state_dict": model.state_dict(),
                       "optimizer": optimizer.state_dict(),
                       "scheduler": scheduler.state_dict()}
-        torch.save(checkpoint, checkpoint_path)
+            checkpoint_path = os.path.join(cfg.SAVE_FOLDER, cfg.NAME + f'_{epoch}.pth')
+            torch.save(checkpoint, checkpoint_path)
+            print(f'Saved checkpoint at {checkpoint_path}')
 
 
 if __name__ == "__main__":
-    opt = get_args()
-    train_detector(opt)
+    args = get_args()
+    cfg = parse_config(args.config)
+    train_detector(cfg)

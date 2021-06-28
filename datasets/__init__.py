@@ -1,3 +1,5 @@
-from datasets.coco import CocoDataset
-from datasets.kitti import KittiDataset
-from datasets.collate_fn import collate_fn
+from .coco import CocoDataset
+from .kitti import KittiDataset
+from .utils import collate_fn
+
+__all__ = ['CocoDataset', 'KittiDataset', 'collate_fn']

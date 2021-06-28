@@ -6,11 +6,6 @@ import numpy as np
 import tqdm
 import torch
 from collections import Counter
-from config import KITTI_CLASSES
-# from pycocotools.cocoeval import COCOeval
-# from apex import amp
-from config import *
-
 
 def train(model, train_loader, epoch, writer, criterion, optimizer, scheduler):
     model.train()
@@ -38,11 +33,11 @@ def train(model, train_loader, epoch, writer, criterion, optimizer, scheduler):
         optimizer.zero_grad()
 
 
-def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold):
+def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold, category_ids):
     model.eval()
     detections = []
     true_boxes = []
-    category_ids = KITTI_CLASSES
+    category_ids = category_ids
     for nbatch, (img, lp_img,img_id, img_size, img_box, img_label) in enumerate(test_loader):
         print("Parsing batch: {}/{}".format(nbatch, len(test_loader)), end="\r")
 
@@ -71,15 +66,11 @@ def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold):
                     detections.append([img_id[idx], category_ids[label_ - 1], prob_, loc_[0] * width, loc_[1] * height, (loc_[2] - loc_[0]) * width,
                                        (loc_[3] - loc_[1]) * height])
 
-        #detections = np.array(detections, dtype=np.float32)
-        map = mean_average_precision(detections, true_boxes)
-        writer.add_scalar("Test/mAP", map, epoch)
-        #detections = detections.tolist()
-
-    # coco_eval = COCOeval(test_loader.dataset.coco, test_loader.dataset.coco.loadRes(detections), iouType="bbox")
-    # coco_eval.evaluate()
-    # coco_eval.accumulate()
-    # coco_eval.summarize()
+        mAP = mean_average_precision(detections, true_boxes)
+        writer.add_scalar("Test/mAP", mAP, epoch)
+        
+        print(f'[Epoch: {epoch}] mAP: ')
+        print(f'\t{mAP}')
 
     # writer.add_scalar("Test/mAP", coco_eval.stats[0], epoch)
 def intersection_over_union(boxes_preds, boxes_labels):

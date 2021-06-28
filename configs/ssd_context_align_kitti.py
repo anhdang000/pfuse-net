@@ -1,4 +1,14 @@
+NAME = 'ssd_context_align_kitti'
+
+
+# ---------------- MODEL -------------------------------
+BACKBONE = 'ResNetParallel'
+MODEL = 'SSDContextFuse'
+
+
 # ---------------- KITTI DATASET -----------------------
+DATASET = 'KITTI'
+
 KITTI_CLASSES = [
     '_background_', 'Car', 'Van', 'Truck', 'Pedestrian', 
     'Person_sitting', 'Cyclist', 'Tram', 'Misc', 'DontCare'

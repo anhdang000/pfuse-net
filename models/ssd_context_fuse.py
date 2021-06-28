@@ -1,5 +1,7 @@
 from models.resnet_fusion import *
 from models.modules import BatchNorm2dParallel, SqueezeAndExciteFusionAdd
+
+
 class SSDContextFuse(Base):
     def __init__(self, backbone=ResNetFuse(), num_classes=10, num_parallel=2):
         super().__init__()
