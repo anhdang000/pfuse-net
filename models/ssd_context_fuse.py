@@ -8,7 +8,7 @@ class SSDContextFuse(Base):
 
         self.feature_extractor = backbone
         self.num_classes = num_classes
-        self.num_parallel = num_parallel # TuyenNQ modified
+        self.num_parallel = num_parallel
         self._build_additional_features(self.feature_extractor.out_channels, self.num_parallel)
         self.num_defaults = [4, 6, 6, 6, 4, 4]
         self.loc = []

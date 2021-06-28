@@ -57,7 +57,7 @@ def train_detector(cfg):
 
     encoder = Encoder(dboxes)
 
-    cfg.lr = cfg.lr * num_gpus * (cfg.batch_size / 32)
+    cfg.LR = cfg.LR * num_gpus * (cfg.BATCH_SIZE / 32)
     criterion = Loss(dboxes)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=cfg.LR, momentum=cfg.MOMENTUM,
@@ -76,7 +76,7 @@ def train_detector(cfg):
     if not os.path.isdir(cfg.SAVE_FOLDER):
         os.makedirs(cfg.SAVE_FOLDER)
 
-    writer = SummaryWriter(cfg.log_path)
+    writer = SummaryWriter(cfg.LOG_PATH)
 
     if args.resume.endswith('.pth') and os.path.isfile(args.resume):
         checkpoint = torch.load(args.resume)

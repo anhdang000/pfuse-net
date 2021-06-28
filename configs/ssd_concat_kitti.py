@@ -5,7 +5,7 @@ NAME = 'ssd_concat_kitti'
 
 
 # ---------------- MODEL -------------------------------
-BACKBONE = ResNetParallel
+BACKBONE = ResNetParallel()
 MODEL = SSDConcat
 
 
