@@ -78,12 +78,16 @@ def train_detector(cfg):
 
     writer = SummaryWriter(cfg.LOG_PATH)
 
-    if args.resume.endswith('.pth') and os.path.isfile(args.resume):
-        checkpoint = torch.load(args.resume)
-        first_epoch = checkpoint["epoch"] + 1
-        model.load_state_dict(checkpoint["model_state_dict"])
-        scheduler.load_state_dict(checkpoint["scheduler"])
-        optimizer.load_state_dict(checkpoint["optimizer"])
+    if args.resume:
+        try:
+            checkpoint = torch.load(args.resume)
+            first_epoch = checkpoint["epoch"] + 1
+            model.load_state_dict(checkpoint["model_state_dict"])
+            scheduler.load_state_dict(checkpoint["scheduler"])
+            optimizer.load_state_dict(checkpoint["optimizer"])
+        except ValueError:
+            print('Invalid checkpoint!')
+            first_epoch = 0
     else:
         first_epoch = 0
 
