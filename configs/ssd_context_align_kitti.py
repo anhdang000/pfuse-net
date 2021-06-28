@@ -1,20 +1,24 @@
+from models import *
+
+
+# ---------------- NAME --------------------------------
 NAME = 'ssd_context_align_kitti'
 
 
 # ---------------- MODEL -------------------------------
-BACKBONE = 'ResNetParallel'
-MODEL = 'SSDContextFuse'
+BACKBONE = ResNetFuse
+MODEL = SSDContextFuse
 
 
 # ---------------- KITTI DATASET -----------------------
 DATASET = 'KITTI'
 
-KITTI_CLASSES = [
+CLASSES = [
     '_background_', 'Car', 'Van', 'Truck', 'Pedestrian', 
     'Person_sitting', 'Cyclist', 'Tram', 'Misc', 'DontCare'
     ]
 
-KITTI_COLORS = [
+COLORS = [
     None, (39, 129, 113), (21, 35, 42), (49, 119, 155), (7, 185, 124), 
     (46, 34, 146), (105, 184, 169), (22, 18, 5), (147, 71, 73), (181, 64, 91)
     ]

@@ -1,9 +1,12 @@
+from models import *
+
+
 NAME = 'ssd_concat_kitti'
 
 
 # ---------------- MODEL -------------------------------
-BACKBONE = 'ResNetFuse'
-MODEL = 'SSDConCat'
+BACKBONE = ResNetFuse
+MODEL = SSDConcat
 
 
 # ---------------- KITTI DATASET -----------------------

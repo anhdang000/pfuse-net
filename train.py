@@ -43,7 +43,7 @@ def train_detector(cfg):
                    "num_workers": cfg.NUM_WORKERS}
 
     dboxes = generate_dboxes(model="ssd")
-    model = SSDConcat(backbone=ResNetParallel(), num_classes=len(cfg.KITTI_CLASSES))
+    model = cfg.MODEL(backbone=cfg.BACKBONE, num_classes=len(cfg.KITTI_CLASSES))
 
     if cfg.DATASET == 'KITTI':
         train_set = KittiDataset(cfg.ROOT, "train", SSDTransformer(dboxes, (300, 300), val=False))
@@ -60,10 +60,10 @@ def train_detector(cfg):
     cfg.lr = cfg.lr * num_gpus * (cfg.batch_size / 32)
     criterion = Loss(dboxes)
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=cfg.lr, momentum=cfg.momentum,
-                                weight_decay=cfg.weight_decay,
+    optimizer = torch.optim.SGD(model.parameters(), lr=cfg.LR, momentum=cfg.MOMENTUM,
+                                weight_decay=cfg.WEIGHT_DECAY,
                                 nesterov=True)
-    scheduler = MultiStepLR(optimizer=optimizer, milestones=cfg.multistep, gamma=0.1)
+    scheduler = MultiStepLR(optimizer=optimizer, milestones=cfg.MULTI_STEPS, gamma=0.1)
 
     if torch.cuda.is_available():
         model.cuda()

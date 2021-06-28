@@ -5,8 +5,7 @@ from PIL import Image
 from torchvision.datasets import VisionDataset
 import torch
 
-# Load config
-from config import *
+from configs.ssd_concat_kitti import IMAGE_DIR, LABEL_DIR, LPIMAGE_DIR, CLASSES
 
 class Kitti(VisionDataset):
     """
@@ -139,7 +138,7 @@ class KittiDataset(Kitti):
         self.label_info = {}
         counter = 1
         self.label_info[0] = "background"
-        for c in KITTI_CLASSES:
+        for c in CLASSES:
             self.label_map[c] = counter
             self.label_info[counter] = c
             counter += 1

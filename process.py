@@ -38,7 +38,7 @@ def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold, category
     detections = []
     true_boxes = []
     category_ids = category_ids
-    for nbatch, (img, lp_img,img_id, img_size, img_box, img_label) in enumerate(test_loader):
+    for nbatch, (img, lp_img, img_id, img_size, img_box, img_label) in enumerate(test_loader):
         print("Parsing batch: {}/{}".format(nbatch, len(test_loader)), end="\r")
 
         if torch.cuda.is_available():
