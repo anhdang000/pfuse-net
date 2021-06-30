@@ -48,16 +48,17 @@ class Concatenate(nn.Module):
 
 
 class Exchange(nn.Module):
-    def __init__(self):
+    def __init__(self, bn, bn_threshold):
         super(Exchange, self).__init__()
-
-    def forward(self, x, bn, bn_threshold):
-        bn1, bn2 = bn[0].weight.abs(), bn[1].weight.abs()
+        self.bn = bn
+        self.bn_threshold = bn_threshold
+    def forward(self, x):
+        bn1, bn2 = self.bn[0].weight.abs(), self.bn[1].weight.abs()
         x1, x2 = torch.zeros_like(x[0]), torch.zeros_like(x[1])
-        x1[:, bn1 >= bn_threshold] = x[0][:, bn1 >= bn_threshold]
-        x1[:, bn1 < bn_threshold] = x[1][:, bn1 < bn_threshold]
-        x2[:, bn2 >= bn_threshold] = x[1][:, bn2 >= bn_threshold]
-        x2[:, bn2 < bn_threshold] = x[0][:, bn2 < bn_threshold]
+        x1[:, bn1 >= self.bn_threshold] = x[0][:, bn1 >= self.bn_threshold]
+        x1[:, bn1 < self.bn_threshold] = x[1][:, bn1 < self.bn_threshold]
+        x2[:, bn2 >= self.bn_threshold] = x[1][:, bn2 >= self.bn_threshold]
+        x2[:, bn2 < self.bn_threshold] = x[0][:, bn2 < self.bn_threshold]
         return [x1, x2]
 
 

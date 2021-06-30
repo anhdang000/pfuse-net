@@ -1,11 +1,12 @@
 from models.resnet_parallel import *
 from models.resnet_fusion import *
-class SSDConcat(Base):
-    def __init__(self, backbone=ResNetParallel(), num_classes=10, num_parallel=2):
+class SSDExchange(Base):
+    def __init__(self, backbone=ResNetParallel(), num_classes=10, num_parallel=2, bn_threshold=1e-2):
         super().__init__()
         self.feature_extractor = backbone
         self.num_classes = num_classes
         self.num_parallel = num_parallel # TuyenNQ modified
+        self.bn_threshold = bn_threshold
         self._build_additional_features(self.feature_extractor.out_channels, self.num_parallel)
         self.num_defaults = [4, 6, 6, 6, 4, 4]
         self.loc = []
@@ -25,26 +26,44 @@ class SSDConcat(Base):
                 zip(input_size[:-1], input_size[1:], [256, 256, 128, 128, 128])):
             if i < 3:
                 #TuyenNQ modified
+                conv1 = ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False))
+                bn1 = BatchNorm2dParallel(channels, num_parallel)
+                relu = ModuleParallel(nn.ReLU(inplace=True))
+                conv2 = ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False))
+                bn2 = BatchNorm2dParallel(output_size, num_parallel)
+                bn2_list = []
+                for module in bn2.modules():
+                    if isinstance(module, nn.BatchNorm2d):
+                        bn2_list.append(module)
                 layer = nn.Sequential(
-                    ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
-                    BatchNorm2dParallel(channels, num_parallel),
-                    ModuleParallel(nn.ReLU(inplace=True)),
+                    conv1,
+                    bn1,
+                    relu,
                     #ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
-                    Concatenate(channels),
-                    ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
-                    BatchNorm2dParallel(output_size, num_parallel),
-                    ModuleParallel(nn.ReLU(inplace=True)),
+                    conv2,
+                    bn2,
+                    Exchange(bn2_list, bn_threshold=self.bn_threshold),
+                    relu,
                 )
             else:
+                conv1 = ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False))
+                bn1 = BatchNorm2dParallel(channels, num_parallel)
+                relu = ModuleParallel(nn.ReLU(inplace=True))
+                conv2 = ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False))
+                bn2 = BatchNorm2dParallel(output_size, num_parallel)
+                bn2_list = []
+                for module in bn2.modules():
+                    if isinstance(module, nn.BatchNorm2d):
+                        bn2_list.append(module)
                 layer = nn.Sequential(
-                    ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
-                    BatchNorm2dParallel(channels, num_parallel),
-                    ModuleParallel(nn.ReLU(inplace=True)),
+                    conv1,
+                    bn1,
+                    relu,
                     #ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
-                    Concatenate(channels),
-                    ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
-                    BatchNorm2dParallel(output_size, num_parallel),
-                    ModuleParallel(nn.ReLU(inplace=True)),
+                    conv2,
+                    bn2,
+                    Exchange(bn2_list, bn_threshold=self.bn_threshold),
+                    relu,
                 )
 
             self.additional_blocks.append(layer)
