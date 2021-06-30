@@ -1,7 +1,7 @@
 from models.resnet_parallel import *
 from models.resnet_fusion import *
 class SSDConcat(Base):
-    def __init__(self, backbone=ResNetParallel(), num_classes=10, num_parallel=2):
+    def __init__(self, backbone=ResNetParallel(), cfg=None, num_classes=10, num_parallel=2):
         super().__init__()
         self.feature_extractor = backbone
         self.num_classes = num_classes

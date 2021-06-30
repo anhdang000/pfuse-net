@@ -1,16 +1,17 @@
 from models.resnet_parallel import *
 from models.resnet_fusion import *
-class SSDExchange(Base):
-    def __init__(self, backbone=ResNetParallel(), cfg=None, num_classes=10, num_parallel=2, bn_threshold=1e-2):
+
+class SSDTransfuser(Base):
+    def __init__(self, backbone=ResNetParallel(), cfg=None, num_classes=10, num_parallel=2):
         super().__init__()
         self.feature_extractor = backbone
         self.num_classes = num_classes
         self.num_parallel = num_parallel # TuyenNQ modified
-        self.bn_threshold = bn_threshold
         self._build_additional_features(self.feature_extractor.out_channels, self.num_parallel)
         self.num_defaults = [4, 6, 6, 6, 4, 4]
         self.loc = []
         self.conf = []
+        self.cfg = cfg
         #TuyenNQ modified: Since step for predict bbox we only compute from rgb image so no need to Parallel here
         for nd, oc in zip(self.num_defaults, self.feature_extractor.out_channels):
             self.loc.append(nn.Conv2d(oc, nd * 4, kernel_size=3, padding=1))
@@ -26,44 +27,32 @@ class SSDExchange(Base):
                 zip(input_size[:-1], input_size[1:], [256, 256, 128, 128, 128])):
             if i < 3:
                 #TuyenNQ modified
-                conv1 = ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False))
-                bn1 = BatchNorm2dParallel(channels, num_parallel)
-                relu = ModuleParallel(nn.ReLU(inplace=True))
-                conv2 = ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False))
-                bn2 = BatchNorm2dParallel(output_size, num_parallel)
-                bn2_list = []
-                for module in bn2.modules():
-                    if isinstance(module, nn.BatchNorm2d):
-                        bn2_list.append(module)
                 layer = nn.Sequential(
-                    conv1,
-                    bn1,
-                    relu,
+                    ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
+                    BatchNorm2dParallel(channels, num_parallel),
+                    ModuleParallel(nn.ReLU(inplace=True)),
                     #ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
-                    conv2,
-                    bn2,
-                    Exchange(bn2_list, bn_threshold=self.bn_threshold),
-                    relu,
+                    GPT(n_embd=channels,n_head=self.cfg.N_HEAD, block_exp=self.cfg.BLOCK_EXP,
+                        n_layer=self.cfg.N_LAYER, vert_anchors=self.cfg.VERT_ANCHORS,
+                        horz_anchors=self.cfg.HORZ_ANCHORS, embd_pdrop=self.cfg.EMBD_PDROP,
+                        attn_pdrop=self.cfg.ATTN_PDROP,resid_pdrop=self.cfg.RESID_PDROP),
+                    ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
+                    BatchNorm2dParallel(output_size, num_parallel),
+                    ModuleParallel(nn.ReLU(inplace=True)),
                 )
             else:
-                conv1 = ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False))
-                bn1 = BatchNorm2dParallel(channels, num_parallel)
-                relu = ModuleParallel(nn.ReLU(inplace=True))
-                conv2 = ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False))
-                bn2 = BatchNorm2dParallel(output_size, num_parallel)
-                bn2_list = []
-                for module in bn2.modules():
-                    if isinstance(module, nn.BatchNorm2d):
-                        bn2_list.append(module)
                 layer = nn.Sequential(
-                    conv1,
-                    bn1,
-                    relu,
+                    ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
+                    BatchNorm2dParallel(channels, num_parallel),
+                    ModuleParallel(nn.ReLU(inplace=True)),
                     #ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
-                    conv2,
-                    bn2,
-                    Exchange(bn2_list, bn_threshold=self.bn_threshold),
-                    relu,
+                    GPT(n_embd=channels, n_head=self.cfg.N_HEAD, block_exp=self.cfg.BLOCK_EXP,
+                        n_layer=self.cfg.N_LAYER, vert_anchors=self.cfg.VERT_ANCHORS,
+                        horz_anchors=self.cfg.HORZ_ANCHORS, embd_pdrop=self.cfg.EMBD_PDROP,
+                        attn_pdrop=self.cfg.ATTN_PDROP,resid_pdrop=self.cfg.RESID_PDROP),
+                    ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
+                    BatchNorm2dParallel(output_size, num_parallel),
+                    ModuleParallel(nn.ReLU(inplace=True)),
                 )
 
             self.additional_blocks.append(layer)
