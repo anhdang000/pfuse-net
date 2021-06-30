@@ -19,7 +19,7 @@ def train(model, train_loader, epoch, writer, criterion, optimizer, scheduler):
             gloc = gloc.cuda()
             glabel = glabel.cuda()
 
-        ploc, plabel = model([img,lp_img])
+        ploc, plabel = model([img, lp_img])
         ploc, plabel = ploc.float(), plabel.float()
         gloc = gloc.transpose(1, 2).contiguous()
         loss = criterion(ploc, plabel, gloc, glabel)
