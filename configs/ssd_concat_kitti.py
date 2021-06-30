@@ -32,8 +32,8 @@ LPIMAGE_DIR = 'lp_image'
 
 # ---------------- LOGGING -----------------------------
 SAVE_FOLDER = 'trained_models'
-SAVE_INTERVAL = 10
 LOG_PATH = 'tensorboard/SSD'
+SAVE_INTERVAL = 1
 
 
 # ---------------- TRAINING CONFIGURATIONS -------------
@@ -44,6 +44,7 @@ LR = 2.6e-3
 MOMENTUM = 0.9
 WEIGHT_DECAY = 0.0005
 NMS_THRESHOLD = 0.5
+CLS_THRESHOLD = 0.3
 NUM_WORKERS = 4
 
 LOCAL_RANK = 0
