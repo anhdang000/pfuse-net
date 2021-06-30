@@ -19,7 +19,8 @@ class ResNetFuse(nn.Module):
 		Input tensors `x`: [rgb, lp]
 		'''
 		for layer in self.feature_extractor:
-			x = ModuleParallel(layer)
-			if type(layer) == nn.Sequential:
-				x = SqueezeAndExciteFusionAdd(x[0].shape[1])
+			x = ModuleParallel(layer)(x)
+			# if type(layer) == nn.Sequential:
+			# x = SqueezeAndExciteFusionAdd(x[0].shape[1])(x)
+			# x = ModuleParallel(self.feature_extractor[-1][0])(x)
 		return x

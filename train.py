@@ -68,7 +68,7 @@ def train_detector(cfg):
     if torch.cuda.is_available():
         model.cuda()
         criterion.cuda()
-
+        
     if os.path.isdir(cfg.LOG_PATH):
         shutil.rmtree(cfg.LOG_PATH)
     os.makedirs(cfg.LOG_PATH)

@@ -57,7 +57,7 @@ def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold, category
                 except:
                     print("No object detected in idx: {}".format(idx))
                     continue
-                height, width = img_size[idx]
+                height, width = img_size[0][idx], img_size[1][idx]
                 for loc_, label_ in zip(img_box[idx], img_label[idx]):
                     true_boxes.append([img_id[idx], label_, loc_[0] * width, loc_[1] * height, (loc_[2] - loc_[0]) * width,
                                        (loc_[3] - loc_[1]) * height])

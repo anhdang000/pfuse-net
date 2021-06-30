@@ -24,7 +24,6 @@ class SqueezeAndExcitation(nn.Module):
 class SqueezeAndExciteFusionAdd(nn.Module):
     def __init__(self, channels_in, activation=nn.ReLU(inplace=True)):
         super(SqueezeAndExciteFusionAdd, self).__init__()
-
         self.se_rgb = SqueezeAndExcitation(channels_in,
                                            activation=activation)
         self.se_lp = SqueezeAndExcitation(channels_in,
