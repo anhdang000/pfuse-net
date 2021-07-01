@@ -269,6 +269,7 @@ class GPT(nn.Module):
         image_tensor = x[0]
         lp_tensor = x[1]
         # To B,C,8,8
+        H,W = lp_tensor.shape[2:4]
         image_tensor = self.avgpool(image_tensor)
         lp_tensor = self.avgpool(lp_tensor)
         bz = lp_tensor.shape[0]
@@ -291,8 +292,9 @@ class GPT(nn.Module):
 
         image_tensor_out = x[:, 0, :, :, :].contiguous().view(bz, -1, h, w)
         lp_tensor_out = x[:, 1, :, :, :].contiguous().view(bz, -1, h, w)
-        image_tensor_out = F.interpolate(image_tensor_out, scale_factor=8, mode="bilinear")
-        lp_tensor_out = F.interpolate(lp_tensor_out, scale_factor=8, mode="bilinear")
+
+        image_tensor_out = F.interpolate(image_tensor_out, size=(H,W), mode="bilinear")
+        lp_tensor_out = F.interpolate(lp_tensor_out, size=(H,W), mode="bilinear")
 
         return [image_tensor_out, lp_tensor_out]
 
