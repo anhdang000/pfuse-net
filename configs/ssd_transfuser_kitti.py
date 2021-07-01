@@ -6,7 +6,7 @@ NAME = 'ssd_transfuser_kitti'
 
 # ---------------- MODEL -------------------------------
 BACKBONE = ResNetParallel()
-MODEL = SSDConcat
+MODEL = SSDTransfuser
 
 
 # ---------------- KITTI DATASET -----------------------

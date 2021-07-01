@@ -6,12 +6,13 @@ class SSDTransfuser(Base):
         super().__init__()
         self.feature_extractor = backbone
         self.num_classes = num_classes
+        self.cfg = cfg
         self.num_parallel = num_parallel # TuyenNQ modified
         self._build_additional_features(self.feature_extractor.out_channels, self.num_parallel)
         self.num_defaults = [4, 6, 6, 6, 4, 4]
         self.loc = []
         self.conf = []
-        self.cfg = cfg
+
         #TuyenNQ modified: Since step for predict bbox we only compute from rgb image so no need to Parallel here
         for nd, oc in zip(self.num_defaults, self.feature_extractor.out_channels):
             self.loc.append(nn.Conv2d(oc, nd * 4, kernel_size=3, padding=1))
