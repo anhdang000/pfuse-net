@@ -43,7 +43,7 @@ def train_detector(cfg):
                    "num_workers": cfg.NUM_WORKERS}
 
     dboxes = generate_dboxes(model="ssd")
-    model = cfg.MODEL(backbone=cfg.BACKBONE, num_classes=len(cfg.CLASSES))
+    model = cfg.MODEL(backbone=cfg.BACKBONE, cfg=cfg, num_classes=len(cfg.CLASSES))
 
     if cfg.DATASET == 'KITTI':
         train_set = KittiDataset(cfg.ROOT, "train", SSDTransformer(dboxes, (300, 300), val=False))

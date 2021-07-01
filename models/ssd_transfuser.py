@@ -1,6 +1,7 @@
 from models.resnet_parallel import *
 from models.resnet_fusion import *
-class SSDConcat(Base):
+
+class SSDTransfuser(Base):
     def __init__(self, backbone=ResNetParallel(), cfg=None, num_classes=10, num_parallel=2):
         super().__init__()
         self.feature_extractor = backbone
@@ -10,6 +11,7 @@ class SSDConcat(Base):
         self.num_defaults = [4, 6, 6, 6, 4, 4]
         self.loc = []
         self.conf = []
+        self.cfg = cfg
         #TuyenNQ modified: Since step for predict bbox we only compute from rgb image so no need to Parallel here
         for nd, oc in zip(self.num_defaults, self.feature_extractor.out_channels):
             self.loc.append(nn.Conv2d(oc, nd * 4, kernel_size=3, padding=1))
@@ -30,7 +32,10 @@ class SSDConcat(Base):
                     BatchNorm2dParallel(channels, num_parallel),
                     ModuleParallel(nn.ReLU(inplace=True)),
                     #ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
-                    Concatenate(channels),
+                    GPT(n_embd=channels,n_head=self.cfg.N_HEAD, block_exp=self.cfg.BLOCK_EXP,
+                        n_layer=self.cfg.N_LAYER, vert_anchors=self.cfg.VERT_ANCHORS,
+                        horz_anchors=self.cfg.HORZ_ANCHORS, embd_pdrop=self.cfg.EMBD_PDROP,
+                        attn_pdrop=self.cfg.ATTN_PDROP,resid_pdrop=self.cfg.RESID_PDROP),
                     ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
                     BatchNorm2dParallel(output_size, num_parallel),
                     ModuleParallel(nn.ReLU(inplace=True)),
@@ -41,7 +46,10 @@ class SSDConcat(Base):
                     BatchNorm2dParallel(channels, num_parallel),
                     ModuleParallel(nn.ReLU(inplace=True)),
                     #ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
-                    Concatenate(channels),
+                    GPT(n_embd=channels, n_head=self.cfg.N_HEAD, block_exp=self.cfg.BLOCK_EXP,
+                        n_layer=self.cfg.N_LAYER, vert_anchors=self.cfg.VERT_ANCHORS,
+                        horz_anchors=self.cfg.HORZ_ANCHORS, embd_pdrop=self.cfg.EMBD_PDROP,
+                        attn_pdrop=self.cfg.ATTN_PDROP,resid_pdrop=self.cfg.RESID_PDROP),
                     ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
                     BatchNorm2dParallel(output_size, num_parallel),
                     ModuleParallel(nn.ReLU(inplace=True)),

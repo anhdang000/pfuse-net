@@ -1,7 +1,7 @@
 from models.resnet import *
 
 class SSD(Base):
-    def __init__(self, backbone=ResNet(), num_classes=81):
+    def __init__(self, backbone=ResNet(), cfg=None, num_classes=81):
         super().__init__()
 
         self.feature_extractor = backbone
