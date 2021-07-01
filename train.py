@@ -70,7 +70,7 @@ def train_detector(cfg):
         criterion.cuda()
         
     if os.path.isdir(cfg.LOG_PATH):
-        shutil.rmtree(cfg.LOG_PATH)
+        os.rename(cfg.LOG_PATH, cfg.LOG_PATH + '_prev')
     os.makedirs(cfg.LOG_PATH)
 
     if not os.path.isdir(cfg.SAVE_FOLDER):
