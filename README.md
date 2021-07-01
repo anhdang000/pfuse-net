@@ -1,11 +1,11 @@
 ## Train from scratch
 ```Shell
-python train.py --connfig configs/ssd_concat_kitti.py
+python train.py --connfig CONFIG
 ```
 
 ## Resume training
 ```Shell
-python train.py --connfig configs/ssd_concat_kitti.py --resume PATH_TO_CHECKPOINT
+python train.py --connfig CONFIG --resume CHECKPOINT
 ```
 
 ## Inference
