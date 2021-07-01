@@ -78,7 +78,12 @@ def test_single(cfg, pretrained_model, input_rgb_path, input_lp_path, output_pat
 
 def test(cfg, args):
     if args.single:
-        test_single(cfg, args.pretrained_model, args.input, args.output)
+        test_single(
+            cfg, 
+            args.pretrained_model, 
+            args.input, 
+            args.output
+            )
     else:
         if not os.path.isdir(args.output):
             os.mkdir(args.output)
