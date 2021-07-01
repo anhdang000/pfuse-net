@@ -32,7 +32,7 @@ LPIMAGE_DIR = 'lp_image'
 
 # ---------------- LOGGING -----------------------------
 SAVE_FOLDER = 'trained_models'
-SAVE_INTERVAL = 10
+SAVE_INTERVAL = 1
 LOG_PATH = 'tensorboard/SSD'
 
 

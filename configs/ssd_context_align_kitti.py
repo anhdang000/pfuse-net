@@ -6,7 +6,7 @@ NAME = 'ssd_context_align_kitti'
 
 
 # ---------------- MODEL -------------------------------
-BACKBONE = ResNetFuse()
+BACKBONE = ResNetFuse(multiple_fuse=True, method="align_ESA")
 MODEL = SSDContextFuse
 
 
