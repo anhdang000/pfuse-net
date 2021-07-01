@@ -80,6 +80,9 @@ def test(cfg, args):
     if args.single:
         test_single(cfg, args.pretrained_model, args.input, args.output)
     else:
+        if not os.path.isdir(args.output):
+            os.mkdir(args.output)
+            
         image_ids = os.listdir(args.input)
         for img_id in image_ids:
             test_single(

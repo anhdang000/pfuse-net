@@ -29,7 +29,4 @@ class ResNetFuse(nn.Module):
 				if self.method == "align_ESA":
 					x = SqueezeAndExciteFusionAdd(x[0].shape[1])(x)
 
-			# if type(layer) == nn.Sequential:
-			# x = SqueezeAndExciteFusionAdd(x[0].shape[1])(x)
-			# x = ModuleParallel(self.feature_extractor[-1][0])(x)
 		return x

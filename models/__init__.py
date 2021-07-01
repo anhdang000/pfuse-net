@@ -6,4 +6,5 @@ from .ssd_concat import SSDConcat
 from .ssd_context_fuse import SSDContextFuse
 from .ssd_exchange import SSDExchange
 from .ssd_transfuser import SSDTransfuser
+
 __all__ = ['ResNet', 'ResNetParallel', 'ResNetFuse', 'SSD', 'SSDConcat', 'SSDContextFuse', 'SSDExchange', 'SSDTransfuser']
