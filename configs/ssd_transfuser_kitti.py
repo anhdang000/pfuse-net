@@ -1,7 +1,7 @@
 from models import *
 
 
-NAME = 'ssd_concat_kitti'
+NAME = 'ssd_transfuser_kitti'
 
 
 # ---------------- MODEL -------------------------------
