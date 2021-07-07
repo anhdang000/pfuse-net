@@ -63,7 +63,7 @@ def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold, category
                                        (loc_[3] - loc_[1]) * height])
                 loc, label, prob = [r.cpu().numpy() for r in result]
                 for loc_, label_, prob_ in zip(loc, label, prob):
-                    detections.append([img_id[idx], category_ids[label_ - 1], prob_, loc_[0] * width, loc_[1] * height, (loc_[2] - loc_[0]) * width,
+                    detections.append([img_id[idx], label_, prob_, loc_[0] * width, loc_[1] * height, (loc_[2] - loc_[0]) * width,
                                        (loc_[3] - loc_[1]) * height])
 
         mAP = mean_average_precision(detections, true_boxes)
@@ -110,7 +110,7 @@ def intersection_over_union(boxes_preds, boxes_labels):
     return intersection / (box1_area + box2_area - intersection + 1e-6)
 
 
-def mean_average_precision(pred_boxes, true_boxes, iou_threshold=0.5, num_classes=9):
+def mean_average_precision(pred_boxes, true_boxes, iou_threshold=0.5, num_classes=10):
     """
     Calculates mean average precision
     Parameters:
@@ -126,8 +126,9 @@ def mean_average_precision(pred_boxes, true_boxes, iou_threshold=0.5, num_classe
 
     average_precisions = []
     epsilon = 1e-6
-
+    result = 0
     for c in range(num_classes):
+
         detections = []
         ground_truths = []
 
@@ -136,12 +137,14 @@ def mean_average_precision(pred_boxes, true_boxes, iou_threshold=0.5, num_classe
         # current class c
         for detection in pred_boxes:
             if detection[1] == c:
+
                 detections.append(detection)
 
         for true_box in true_boxes:
             if true_box[1] == c:
                 ground_truths.append(true_box)
-
+        # print(detections)
+        # print(ground_truths)
         # find the amount of bboxes for each training example
         # Counter here finds how many ground truth bboxes we get
         # for each training example, so let's say img 0 has 3,
@@ -195,8 +198,12 @@ def mean_average_precision(pred_boxes, true_boxes, iou_threshold=0.5, num_classe
         FP_cumsum = torch.cumsum(FP, dim=0)
         recalls = TP_cumsum / (total_true_bboxes + epsilon)
         precisions = TP_cumsum / (TP_cumsum + FP_cumsum + epsilon)
-        precisions = torch.cat((torch.tensor([1]), precisions))
-        recalls = torch.cat((torch.tensor([0]), recalls))
+        # print(precisions)
+        precisions = torch.cat((torch.tensor([1], dtype=torch.float), precisions))
+        recalls = torch.cat((torch.tensor([0], dtype=torch.float), recalls))
         average_precisions.append(torch.trapz(precisions, recalls))
-
-    return sum(average_precisions) / len(average_precisions)
+    try:
+        result = sum(average_precisions) / len(average_precisions)
+    except:
+        print("Divisor by zero value of len(average_precisions)")
+    return result

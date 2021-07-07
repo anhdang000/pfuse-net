@@ -26,7 +26,7 @@ COLORS = [
 # ---------------- DATASET PATH ------------------------
 ROOT = '../stereo_datasets'
 IMAGE_DIR = 'image_2'
-LABEL_DIR = 'label_2'
+LABEL_DIR = 'label_2' # the label folder should be label_2/label_2_training and label_2/label_2_val
 LPIMAGE_DIR = 'lp_image'
 
 
