@@ -73,6 +73,8 @@ def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold, category
         print(f'\t{mAP}')
 
     # writer.add_scalar("Test/mAP", coco_eval.stats[0], epoch)
+
+
 def intersection_over_union(boxes_preds, boxes_labels):
     """
     Calculates intersection over union
@@ -87,14 +89,14 @@ def intersection_over_union(boxes_preds, boxes_labels):
     # Doing ... in indexing if there would be additional dimensions
     # Like for Yolo algorithm which would have (N, S, S, 4) in shape
 
-    box1_x1 = boxes_preds[..., 0:1]
-    box1_y1 = boxes_preds[..., 1:2]
-    box1_x2 = boxes_preds[..., 2:3]
-    box1_y2 = boxes_preds[..., 3:4]
-    box2_x1 = boxes_labels[..., 0:1]
-    box2_y1 = boxes_labels[..., 1:2]
-    box2_x2 = boxes_labels[..., 2:3]
-    box2_y2 = boxes_labels[..., 3:4]
+    box1_x1 = boxes_preds[..., 0:1] - boxes_preds[..., 2:3] / 2
+    box1_y1 = boxes_preds[..., 1:2] - boxes_preds[..., 3:4] / 2
+    box1_x2 = boxes_preds[..., 0:1] + boxes_preds[..., 2:3] / 2
+    box1_y2 = boxes_preds[..., 1:2] + boxes_preds[..., 3:4] / 2
+    box2_x1 = boxes_labels[..., 0:1] - boxes_labels[..., 2:3] / 2
+    box2_y1 = boxes_labels[..., 1:2] - boxes_labels[..., 3:4] / 2
+    box2_x2 = boxes_labels[..., 0:1] + boxes_labels[..., 2:3] / 2
+    box2_y2 = boxes_labels[..., 1:2] + boxes_labels[..., 3:4] / 2
 
     x1 = torch.max(box1_x1, box2_x1)
     y1 = torch.max(box1_y1, box2_y1)
@@ -106,6 +108,7 @@ def intersection_over_union(boxes_preds, boxes_labels):
     box2_area = abs((box2_x2 - box2_x1) * (box2_y2 - box2_y1))
 
     return intersection / (box1_area + box2_area - intersection + 1e-6)
+
 
 def mean_average_precision(pred_boxes, true_boxes, iou_threshold=0.5, num_classes=9):
     """
