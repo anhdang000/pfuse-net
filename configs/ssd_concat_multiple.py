@@ -29,6 +29,10 @@ IMAGE_DIR = 'image_2'
 LABEL_DIR = 'label_2'
 LPIMAGE_DIR = 'lp_image'
 
+#______________PRETRAINED________________________
+PRETRAINED_DIR = "./coco/pretrained/SSD.pth"
+USE_COCO_PRETRAIN = False
+
 
 # ---------------- LOGGING -----------------------------
 SAVE_FOLDER = 'trained_models'

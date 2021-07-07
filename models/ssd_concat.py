@@ -1,5 +1,7 @@
 from models.resnet_parallel import *
 from models.resnet_fusion import *
+from collections import OrderedDict
+from itertools import islice
 class SSDConcat(Base):
     def __init__(self, backbone=ResNetParallel(), cfg=None, num_classes=10, num_parallel=2):
         super().__init__()
@@ -51,7 +53,55 @@ class SSDConcat(Base):
 
         self.additional_blocks = nn.ModuleList(self.additional_blocks)
 
+    def init_load_from(self, checkpoint):
+        with torch.no_grad():
+            weights = self.feature_extractor.feature_extractor.state_dict()
+            fe_checkpoints = []
+            for (k1, v1), (k2, v2) in zip(checkpoint["model_state_dict"].items(), weights.items()):
+                # print(k)
+                if "feature_extractor" in k1:
+                    fe_checkpoints.append((k2, v1))
+            # for k,v in feature_extractor.state_dict().items():
+            #   weights =
+            fe_checkpoints = OrderedDict(fe_checkpoints)
+            self.feature_extractor.feature_extractor.load_state_dict(fe_checkpoints, strict=False)
+            add_weights = []
+            for i in range(0, 5):
+                weights = islice(checkpoint["model_state_dict"].items(), 258, 318)
+                name = "additional_blocks." + str(i)
+                # print(name)
+                count = 0
+                for (k, v) in weights:
+                    # print(k)
+                    if name in k:
+                        if count == 6:
+                            add_weights.append(("added." + str(i), torch.tensor(0)))
+                        add_weights.append((k, v))
+                        count += 1
 
+            add_weights = OrderedDict(add_weights)
+            weights = []
+            for (k1, v1), (k2, v2) in zip(add_weights.items(), self.additional_blocks.state_dict().items()):
+                if "added" in k1:
+                    weights.append((k2, v2))
+                else:
+                    weights.append((k2, v1))
+
+            add_block_weights = OrderedDict(weights)
+            self.additional_blocks.load_state_dict(add_block_weights)
+            loc_weights = (list(checkpoint["model_state_dict"].items())[318:330])
+            loc_w = []
+            for (k1, v1), (k2, v2) in zip(loc_weights, self.loc.state_dict().items()):
+                loc_w.append((k2, v1))
+            loc_w = OrderedDict(loc_w)
+            self.loc.load_state_dict(loc_w)
+            # Since the difference of num classes, we cannot load conf module
+            # conf_weights = (list(checkpoint["model_state_dict"].items())[330:342])
+            # conf_w = []
+            # for (k1,v1), (k2,v2) in zip(conf_weights, self.conf.state_dict().items()):
+            #   conf_w.append((k2, v1))
+            # conf_w = OrderedDict(conf_w)
+            # self.conf.load_state_dict(conf_w)
     def forward(self, x):
         x = self.feature_extractor(x)
         detection_feed = [x[0]] # Take only output of rgb to predict bbox

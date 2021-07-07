@@ -44,7 +44,9 @@ def train_detector(cfg):
 
     dboxes = generate_dboxes(model="ssd")
     model = cfg.MODEL(backbone=cfg.BACKBONE, cfg=cfg, num_classes=len(cfg.CLASSES))
-
+    if cfg.USE_COCO_PRETRAIN:
+        checkpoint = torch.load(cfg.PRETRAINED_DIR)
+        model.init_load_from(checkpoint)
     if cfg.DATASET == 'KITTI':
         train_set = KittiDataset(cfg.ROOT, "train", SSDTransformer(dboxes, (300, 300), val=False))
         test_set = KittiDataset(cfg.ROOT, "val", SSDTransformer(dboxes, (300, 300), val=True))
