@@ -64,7 +64,7 @@ class Kitti(VisionDataset):
         # elif self.mode == "val":
         #     img_files = img_files[length:]
 
-        labels_dir = os.path.join(self.root, self._location,self.labels_dir_name)
+        labels_dir = os.path.join(self.root, self._location)
         if self.mode == "train":
             labels_dir = os.path.join(labels_dir, "label_2_training")
         if self.mode == "val":
