@@ -6,6 +6,9 @@ from torchvision.datasets import CocoDetection
 from torch.utils.data.dataloader import default_collate
 import os
 
+from PIL import Image
+
+
 def collate_fn(batch):
     items = list(zip(*batch))
     items[0] = default_collate([i for i in items[0] if torch.is_tensor(i)])
@@ -19,6 +22,7 @@ def collate_fn(batch):
 class CocoDataset(CocoDetection):
     def __init__(self, root, year, mode, transform=None):
         annFile = os.path.join(root, "annotations", "instances_{}{}.json".format(mode, year))
+        self.lp_root = os.path.join(root, "LTP", "{}{}".format(mode, year))
         root = os.path.join(root, "{}{}".format(mode, year))
         super(CocoDataset, self).__init__(root, annFile)
         self._load_categories()
@@ -40,6 +44,9 @@ class CocoDataset(CocoDetection):
 
     def __getitem__(self, item):
         image, target = super(CocoDataset, self).__getitem__(item)
+        id = super(CocoDataset, self).ids[item]
+        path = super(CocoDataset, self).coco.loadImgs(id)[0]["file-name"]
+        lp_image = Image.open(os.path.join(self.lp_root, path)).convert("RGB")
         width, height = image.size
         boxes = []
         labels = []
@@ -52,5 +59,5 @@ class CocoDataset(CocoDetection):
         boxes = torch.tensor(boxes)
         labels = torch.tensor(labels)
         if self.transform is not None:
-            image, (height, width), boxes, labels = self.transform(image, (height, width), boxes, labels)
-        return image, target[0]["image_id"], (height, width), boxes, labels
+            image, lp_image, (height, width), boxes, labels = self.transform(image, lp_image,(height, width), boxes, labels)
+        return image, lp_image, target[0]["image_id"], (height, width), boxes, labels

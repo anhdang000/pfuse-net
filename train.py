@@ -11,7 +11,7 @@ from models import *
 from utils import generate_dboxes, Encoder
 from transform import SSDTransformer
 from loss import Loss
-from process import train, evaluate
+from process import train, evaluate_kitti, evaluate_coco
 from datasets import CocoDataset, KittiDataset
 
 from configs.utils import parse_config
@@ -97,7 +97,10 @@ def train_detector(cfg):
         train(model, train_loader, epoch, writer, criterion, optimizer, scheduler)
         if epoch % cfg.SAVE_INTERVAL == 0:
             print('Evaluating ...')
-            evaluate(model, test_loader, epoch, writer, encoder, cfg.NMS_THRESHOLD, cfg.CLASSES)
+            if cfg.DATASET == "KITTI":
+                evaluate_kitti(model, test_loader, epoch, writer, encoder, cfg.NMS_THRESHOLD, cfg.CLASSES)
+            if cfg.DATASET == "COCO":
+                evaluate_coco(model, test_loader, epoch, writer, encoder, cfg.NMS_THRESHOLD)
             
             checkpoint = {"epoch": epoch,
                       "model_state_dict": model.state_dict(),
