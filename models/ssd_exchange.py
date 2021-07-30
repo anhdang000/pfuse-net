@@ -1,7 +1,7 @@
-from models.resnet_parallel import *
+from models.resnet_nonsharing import *
 from models.resnet_fusion import *
 class SSDExchange(Base):
-    def __init__(self, backbone=ResNetParallel(), cfg=None, num_classes=10, num_parallel=2, bn_threshold=1e-2):
+    def __init__(self, backbone=ResNetParallel_NonSharing(), cfg=None, num_classes=10, num_parallel=2, bn_threshold=1e-2):
         super().__init__()
         self.feature_extractor = backbone
         self.num_classes = num_classes
@@ -26,10 +26,10 @@ class SSDExchange(Base):
                 zip(input_size[:-1], input_size[1:], [256, 256, 128, 128, 128])):
             if i < 3:
                 #TuyenNQ modified
-                conv1 = ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False))
+                conv1 = ModuleParallel_NonSharing(nn.Conv2d(input_size, channels, kernel_size=1, bias=False))
                 bn1 = BatchNorm2dParallel(channels, num_parallel)
-                relu = ModuleParallel(nn.ReLU(inplace=True))
-                conv2 = ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False))
+                relu = ModuleParallel_NonSharing(nn.ReLU(inplace=True))
+                conv2 = ModuleParallel_NonSharing(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False))
                 bn2 = BatchNorm2dParallel(output_size, num_parallel)
                 bn2_list = []
                 for module in bn2.modules():
@@ -46,10 +46,10 @@ class SSDExchange(Base):
                     relu,
                 )
             else:
-                conv1 = ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False))
+                conv1 = ModuleParallel_NonSharing(nn.Conv2d(input_size, channels, kernel_size=1, bias=False))
                 bn1 = BatchNorm2dParallel(channels, num_parallel)
-                relu = ModuleParallel(nn.ReLU(inplace=True))
-                conv2 = ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False))
+                relu = ModuleParallel_NonSharing(nn.ReLU(inplace=True))
+                conv2 = ModuleParallel_NonSharing(nn.Conv2d(channels, output_size, kernel_size=3, bias=False))
                 bn2 = BatchNorm2dParallel(output_size, num_parallel)
                 bn2_list = []
                 for module in bn2.modules():

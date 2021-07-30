@@ -1,9 +1,9 @@
-from models.resnet_fusion import *
-from models.modules import BatchNorm2dParallel, SqueezeAndExciteFusionAdd
+from models.resnet_nonsharing import *
+from models.modules import *
 
 
 class SSDContextFuse(Base):
-    def __init__(self, backbone=ResNetFuse(), cfg=None, num_classes=10, num_parallel=2):
+    def __init__(self, backbone=ResNetParallel_NonSharing(), cfg=None, num_classes=10, num_parallel=2):
         super().__init__()
 
         self.feature_extractor = backbone
@@ -29,23 +29,23 @@ class SSDContextFuse(Base):
             if i < 3:
                 #TuyenNQ modified
                 layer = nn.Sequential(
-                    ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
+                    ModuleParallel_NonSharing(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
                     BatchNorm2dParallel(channels, num_parallel),
-                    ModuleParallel(nn.ReLU(inplace=True)),
+                    ModuleParallel_NonSharing(nn.ReLU(inplace=True)),
                     SqueezeAndExciteFusionAdd(channels),
-                    ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
+                    ModuleParallel_NonSharing(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
                     BatchNorm2dParallel(output_size, num_parallel),
-                    ModuleParallel(nn.ReLU(inplace=True)),
+                    ModuleParallel_NonSharing(nn.ReLU(inplace=True)),
                 )
             else:
                 layer = nn.Sequential(
-                    ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
+                    ModuleParallel_NonSharing(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
                     BatchNorm2dParallel(channels, num_parallel),
-                    ModuleParallel(nn.ReLU(inplace=True)),
+                    ModuleParallel_NonSharing(nn.ReLU(inplace=True)),
                     SqueezeAndExciteFusionAdd(channels),
-                    ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
+                    ModuleParallel_NonSharing(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
                     BatchNorm2dParallel(output_size, num_parallel),
-                    ModuleParallel(nn.ReLU(inplace=True)),
+                    ModuleParallel_NonSharing(nn.ReLU(inplace=True)),
                 )
 
             self.additional_blocks.append(layer)

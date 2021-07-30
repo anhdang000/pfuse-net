@@ -1,8 +1,8 @@
-from models.resnet_parallel import *
+from models.resnet_nonsharing import *
 from models.resnet_fusion import *
 
 class SSDTransfuser(Base):
-    def __init__(self, backbone=ResNetParallel(), cfg=None, num_classes=10, num_parallel=2):
+    def __init__(self, backbone=ResNetParallel_NonSharing(), cfg=None, num_classes=10, num_parallel=2):
         super().__init__()
         self.feature_extractor = backbone
         self.num_classes = num_classes
@@ -29,31 +29,31 @@ class SSDTransfuser(Base):
             if i < 3:
                 #TuyenNQ modified
                 layer = nn.Sequential(
-                    ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
+                    ModuleParallel_NonSharing(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
                     BatchNorm2dParallel(channels, num_parallel),
-                    ModuleParallel(nn.ReLU(inplace=True)),
+                    ModuleParallel_NonSharing(nn.ReLU(inplace=True)),
                     #ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
                     GPT(n_embd=channels,n_head=self.cfg.N_HEAD, block_exp=self.cfg.BLOCK_EXP,
                         n_layer=self.cfg.N_LAYER, vert_anchors=self.cfg.VERT_ANCHORS,
                         horz_anchors=self.cfg.HORZ_ANCHORS, embd_pdrop=self.cfg.EMBD_PDROP,
                         attn_pdrop=self.cfg.ATTN_PDROP,resid_pdrop=self.cfg.RESID_PDROP),
-                    ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
+                    ModuleParallel_NonSharing(nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False)),
                     BatchNorm2dParallel(output_size, num_parallel),
-                    ModuleParallel(nn.ReLU(inplace=True)),
+                    ModuleParallel_NonSharing(nn.ReLU(inplace=True)),
                 )
             else:
                 layer = nn.Sequential(
-                    ModuleParallel(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
+                    ModuleParallel_NonSharing(nn.Conv2d(input_size, channels, kernel_size=1, bias=False)),
                     BatchNorm2dParallel(channels, num_parallel),
-                    ModuleParallel(nn.ReLU(inplace=True)),
+                    ModuleParallel_NonSharing(nn.ReLU(inplace=True)),
                     #ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
                     GPT(n_embd=channels, n_head=self.cfg.N_HEAD, block_exp=self.cfg.BLOCK_EXP,
                         n_layer=self.cfg.N_LAYER, vert_anchors=self.cfg.VERT_ANCHORS,
                         horz_anchors=self.cfg.HORZ_ANCHORS, embd_pdrop=self.cfg.EMBD_PDROP,
                         attn_pdrop=self.cfg.ATTN_PDROP,resid_pdrop=self.cfg.RESID_PDROP),
-                    ModuleParallel(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
+                    ModuleParallel_NonSharing(nn.Conv2d(channels, output_size, kernel_size=3, bias=False)),
                     BatchNorm2dParallel(output_size, num_parallel),
-                    ModuleParallel(nn.ReLU(inplace=True)),
+                    ModuleParallel_NonSharing(nn.ReLU(inplace=True)),
                 )
 
             self.additional_blocks.append(layer)

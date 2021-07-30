@@ -5,7 +5,7 @@ NAME = 'ssd_exchange_kitti'
 
 
 # ---------------- MODEL -------------------------------
-BACKBONE = ResNetFuse()
+BACKBONE = ResNetParallel_NonSharing()
 MODEL = SSDExchange
 
 

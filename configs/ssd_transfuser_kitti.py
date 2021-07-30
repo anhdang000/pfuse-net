@@ -5,7 +5,7 @@ NAME = 'ssd_transfuser_kitti'
 
 
 # ---------------- MODEL -------------------------------
-BACKBONE = ResNetParallel()
+BACKBONE = ResNetParallel_NonSharing()
 MODEL = SSDTransfuser
 
 

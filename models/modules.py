@@ -92,6 +92,14 @@ class ModuleParallel(nn.Module):
     def forward(self, x_parallel):
         return [self.module(x) for x in x_parallel]
 
+class ModuleParallel_NonSharing(nn.Module):
+    def __init__(self, module, num_parallel):
+        super(ModuleParallel_NonSharing, self).__init__()
+        for i in range(num_parallel):
+            setattr(self, 'conv_'+str(i), module)
+
+    def forward(self, x_parallel):
+        return [getattr(self, 'conv_'+str(i))(x) for i, x in enumerate(x_parallel)]
 
 class BatchNorm2dParallel(nn.Module):
     def __init__(self, num_features, num_parallel):
