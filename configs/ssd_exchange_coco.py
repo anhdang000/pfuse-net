@@ -62,7 +62,7 @@ LOG_PATH = 'tensorboard/SSD'
 
 # ---------------- TRAINING CONFIGURATIONS -------------
 NUM_EPOCHS = 60
-BATCH_SIZE = 16
+BATCH_SIZE = 8
 MULTI_STEPS = [40, 52]
 LR = 2.6e-3
 MOMENTUM = 0.9
