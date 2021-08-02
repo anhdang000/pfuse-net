@@ -43,10 +43,10 @@ COLORS = [None, (39, 129, 113), (164, 80, 133), (83, 122, 114), (99, 81, 172), (
 
 
 # ---------------- DATASET PATH ------------------------
-ROOT = '../stereo_datasets'
+ROOT = '../coco'
 IMAGE_DIR = 'image_2'
 LABEL_DIR = 'label_2'
-LPIMAGE_DIR = 'lp_image'
+LPIMAGE_DIR = 'LTP'
 
 
 #______________PRETRAINED________________________
