@@ -49,7 +49,7 @@ class CocoDataset(CocoDetection):
     def __getitem__(self, item):
         image, target = super(CocoDataset, self).__getitem__(item)
         id = self.ids[item]
-        path = self.coco.loadImgs(id)[0]["file-name"]
+        path = self.coco.loadImgs(id)[0]["file_name"]
 
         lp_image = Image.open(os.path.join(self.lp_root, path)).convert("RGB")
         width, height = image.size
