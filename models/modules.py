@@ -93,7 +93,7 @@ class ModuleParallel(nn.Module):
         return [self.module(x) for x in x_parallel]
 
 class ModuleParallel_NonSharing(nn.Module):
-    def __init__(self, module, num_parallel):
+    def __init__(self, module, num_parallel=2):
         super(ModuleParallel_NonSharing, self).__init__()
         for i in range(num_parallel):
             setattr(self, 'module_'+str(i), module)
