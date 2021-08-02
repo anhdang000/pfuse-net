@@ -12,7 +12,7 @@ from utils import generate_dboxes, Encoder
 from transform import SSDTransformer
 from loss import Loss
 from process import train, evaluate_kitti, evaluate_coco
-from datasets import CocoDataset, KittiDataset
+from datasets import CocoDataset, KittiDataset, collate_fn
 
 from configs.utils import parse_config
 
@@ -31,16 +31,29 @@ def get_args():
 
 def train_detector(cfg):
     num_gpus = torch.cuda.device_count()
+    if cfg.DATASET == 'KITTI':
+        train_params = {"batch_size": cfg.BATCH_SIZE * num_gpus,
+                        "shuffle": True,
+                        "drop_last": False,
+                        "num_workers": cfg.NUM_WORKERS}
 
-    train_params = {"batch_size": cfg.BATCH_SIZE * num_gpus,
-                    "shuffle": True,
-                    "drop_last": False,
-                    "num_workers": cfg.NUM_WORKERS}
+        test_params = {"batch_size": cfg.BATCH_SIZE * num_gpus,
+                       "shuffle": False,
+                       "drop_last": False,
+                       "num_workers": cfg.NUM_WORKERS}
+    elif cfg.DATASET == 'COCO':
+        train_params = {"batch_size": cfg.BATCH_SIZE * num_gpus,
+                        "shuffle": True,
+                        "drop_last": False,
+                        "num_workers": cfg.NUM_WORKERS,
+                        "collate_fn": collate_fn}
 
-    test_params = {"batch_size": cfg.BATCH_SIZE * num_gpus,
-                   "shuffle": False,
-                   "drop_last": False,
-                   "num_workers": cfg.NUM_WORKERS}
+        test_params = {"batch_size": cfg.BATCH_SIZE * num_gpus,
+                       "shuffle": False,
+                       "drop_last": False,
+                       "num_workers": cfg.NUM_WORKERS,
+                       "collate_fn": collate_fn}
+
 
     dboxes = generate_dboxes(model="ssd")
     model = cfg.MODEL(backbone=cfg.BACKBONE, cfg=cfg, num_classes=len(cfg.CLASSES))
