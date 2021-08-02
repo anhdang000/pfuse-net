@@ -100,6 +100,8 @@ class ModuleParallel_NonSharing(nn.Module):
 
     def forward(self, x_parallel):
         return [getattr(self, 'module_'+str(i))(x) for i, x in enumerate(x_parallel)]
+    def get_module(self, i):
+        return getattr(self, 'module_'+str(i))
 
 class BatchNorm2dParallel(nn.Module):
     def __init__(self, num_features, num_parallel):

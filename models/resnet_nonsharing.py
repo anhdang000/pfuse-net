@@ -12,12 +12,12 @@ class ResNetParallel_NonSharing(nn.Module):
         layers_backbone = [ModuleParallel_NonSharing(child, num_parallel=2) for child in list(backbone.children())[:7]]
         self.feature_extractor = nn.Sequential(*layers_backbone)
 
-        conv4_block0 = self.feature_extractor[-1].getattr(self, 'module_'+str(0))[0]
+        conv4_block0 = self.feature_extractor[-1].get_module(0)[0]
         conv4_block0.conv1.stride = (1, 1)
         conv4_block0.conv2.stride = (1, 1)
         conv4_block0.downsample[0].stride = (1, 1)
 
-        conv4_block1 = self.feature_extractor[-1].getattr(self, 'module_' + str(1))[0]
+        conv4_block1 = self.feature_extractor[-1].get_module(1)[0]
         conv4_block1.conv1.stride = (1, 1)
         conv4_block1.conv2.stride = (1, 1)
         conv4_block1.downsample[0].stride = (1, 1)
