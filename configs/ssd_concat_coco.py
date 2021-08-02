@@ -5,7 +5,7 @@ NAME = 'ssd_concat_coco'
 
 
 # ---------------- MODEL -------------------------------
-BACKBONE = ResNetParallel_NonSharing()
+BACKBONE = ResNetParallel()
 MODEL = SSDConcat
 
 
