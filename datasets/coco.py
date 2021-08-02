@@ -25,6 +25,10 @@ class CocoDataset(CocoDetection):
         self.lp_root = os.path.join(root, "LTP", "{}{}".format(mode, year))
         root = os.path.join(root, "{}{}".format(mode, year))
         super(CocoDataset, self).__init__(root, annFile)
+        from pycocotools.coco import COCO
+
+        self.coco = COCO(annFile)
+        self.ids = list(sorted(self.coco.imgs.keys()))
         self._load_categories()
         self.transform = transform
 
@@ -44,14 +48,15 @@ class CocoDataset(CocoDetection):
 
     def __getitem__(self, item):
         image, target = super(CocoDataset, self).__getitem__(item)
-        id = super(CocoDataset, self).ids[item]
-        path = super(CocoDataset, self).coco.loadImgs(id)[0]["file-name"]
+        id = self.ids[item]
+        path = self.coco.loadImgs(id)[0]["file-name"]
+
         lp_image = Image.open(os.path.join(self.lp_root, path)).convert("RGB")
         width, height = image.size
         boxes = []
         labels = []
         if len(target) == 0:
-            return None, None, None, None, None
+            return None, None, None, None, None, None
         for annotation in target:
             bbox = annotation.get("bbox")
             boxes.append([bbox[0] / width, bbox[1] / height, (bbox[0] + bbox[2]) / width, (bbox[1] + bbox[3]) / height])
